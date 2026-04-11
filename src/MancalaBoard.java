@@ -121,24 +121,6 @@ public class MancalaBoard {
     }
 
     /**
-     * Sets a specific pit or store to a given value.
-     * Used when restoring a board snapshot.
-     * 
-     * @param pitIndex index of given pit or store.
-     * @param stones number of stones to set.
-     * @throws IllegalArgumentException if pit or store index is invalid, or stones is negative.
-     */
-    public void setPit(int pitIndex, int stones) {
-        if (pitIndex < 0 || pitIndex >= pits.length) {
-            throw new IllegalArgumentException("Invalid pit index");
-        }
-        if (stones < 0) {
-            throw new IllegalArgumentException("Stone count cannot be negative");
-        }
-        pits[pitIndex] = stones;
-    }
-
-    /**
      * Returns a full deep copy of the pits array.
      * Used by UndoManager to save snapshots.
      * 
