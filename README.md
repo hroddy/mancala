@@ -7,7 +7,7 @@ The board consists of two rows of pits, each. Three pieces of stones are placed 
 ## Architecture
 **Model:** `MancalaBoard` holds the raw 14-pit int array. `MancalaModel` owns a `MancalaBoard` and contains all game logic (move distribution, capture rule, free-turn rule, end-game detection). `UndoManager` stores board snapshots and enforces the 3-undo-per-turn limit.
 
-**View/Controller:** `MancalaView` implements `MancalaListener` to receive change notifications from the model and repaint the board. It doubles as the controller by handling pit click events and forwarding them to the model.
+**View/Controller:** `MancalaViewController` implements `MancalaListener` to receive change notifications from the model and repaint the board. It doubles as the controller by handling pit click events and forwarding them to the model.
 
 **Observer:** `MancalaListener` is the interface that decouples the model from the view. The model calls `boardChanged()` on all registered listeners when state changes.
 
