@@ -1,6 +1,13 @@
+/**
+ * author: Hannah
+ * MancalaBoard.java
+ * 
+ * This file holds the data structure of the board and its manipulation methods.
+ * Such as moving stones, adding stones, and retrieving the current state of the pits and stores.
+ * This class is part of the model in our MVC architecture.
+ */
+
 public class MancalaBoard {
-    // Part of the model
-    // This class will represent the Mancala board and its state, including the pits and the stones.
 
     //Holds raw int array representing the 14 pits (6 for each player and 2 for the stores)
     private int[] pits = new int[14];
@@ -13,14 +20,14 @@ public class MancalaBoard {
         }
     }
 
-    // Returns a copy of the 6 pit stone counts belonging to player A: 0-5, store: 6
+    // Returns a copy of the 6 pit stone counts belonging to player A: 0-5
     public int[] getPlayerAPits() {
-        return new int[]{pits[0], pits[1], pits[2], pits[3], pits[4], pits[5], pits[6]};
+        return new int[]{pits[0], pits[1], pits[2], pits[3], pits[4], pits[5]};
     }
 
-    // Returns a copy of the 6 pit stone counts belonging to player B: 7-12, store: 13
+    // Returns a copy of the 6 pit stone counts belonging to player B: 7-12
     public int[] getPlayerBPits() {
-        return new int[]{pits[7], pits[8], pits[9], pits[10], pits[11], pits[12], pits[13]};
+        return new int[]{pits[7], pits[8], pits[9], pits[10], pits[11], pits[12]};
     }
 
     // Returns the stone count in Player A's mancala (index 6).
