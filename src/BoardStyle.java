@@ -15,12 +15,22 @@ import java.awt.Graphics;
 
 public interface BoardStyle {
     /**
+     * Gets the primary color of the board.
+     * 
      * @return background color of board. If board uses gradient as background, returns blend as proxy.
      */
     Color getBoardColor();
 
     /**
-     * Draws the outer board shape at the given position and size.
+     * Paints board, including pits, stores, and stones.
+     * Paints within specified drawing window based on current game state.
+     * 
+     * @param g the graphics context used to draw the board.
+     * @param x the x-coordinate of top left corner of window.
+     * @param y the y-coordinate of top left corner of window.
+     * @param width the width of the window.
+     * @param height the height of the window.
+     * @param gameState array containing stone counts for all pits and stores.
      */
-    void drawBoard(Graphics g, int x, int y, int width, int height, int[] stones);
+    void drawBoard(Graphics g, int x, int y, int width, int height, int[] gameState);
 }
