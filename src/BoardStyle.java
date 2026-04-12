@@ -15,22 +15,12 @@ import java.awt.Graphics;
 
 public interface BoardStyle {
     /**
-     * @return the background color of the board.
+     * @return background color of board. If board uses gradient as background, returns blend as proxy.
      */
     Color getBoardColor();
 
     /**
      * Draws the outer board shape at the given position and size.
      */
-    void drawBoard(Graphics g, int x, int y, int width, int height);
-
-    /**
-     * Draws a single pit at the given position, showing the correct number of stones inside it.
-     */
-    void drawPit(Graphics g, int x, int y, int size, int stones);
-
-    /**
-     * Draws a player's store (mancala) at the given position, showing the correct stone count.
-     */
-    void drawStore(Graphics g, int x, int y, int width, int height, int stones);
+    void drawBoard(Graphics g, int x, int y, int width, int height, int[] stones);
 }

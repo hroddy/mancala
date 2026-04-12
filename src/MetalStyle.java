@@ -12,19 +12,20 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 public class MetalStyle implements BoardStyle {
-    Color color;
+    private static final Color LIGHT_METAL = new Color(200, 200, 200);
+    private static final Color DARK_METAL  = new Color(130, 130, 130);
     
     /**
      * {@inheritDoc}
      */
     public Color getBoardColor() {
-        return color;
+        return StyleUtils.blend(LIGHT_METAL, DARK_METAL);
     }
 
     /**
      * {@inheritDoc}
      */
-    public void drawBoard(Graphics g, int x, int y, int width, int height) {
+    public void drawBoard(Graphics g, int x, int y, int width, int height, int[] stones) {
 
     }
 
