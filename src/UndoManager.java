@@ -12,4 +12,16 @@
 
 public class UndoManager {
 
+private int[] savedBoard;
+private boolean canUndo;
+private int undoCount;
+
+
+
+public UndoManager(){
+    savedBoard = null;
+    canUndo = false;
+    undoCount = 0;
+}
+
 }
