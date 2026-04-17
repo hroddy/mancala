@@ -17,14 +17,12 @@ import java.awt.Graphics;
  */
 public interface BoardStyle {
     /**
-     * Returns primary color of the board.
-     * 
-     * @return background color of the board; if board uses a gradient, returns blended proxy color.
+     * @return the board's primary color.
      */
     Color getBoardColor();
 
     /**
-     * Paints board, including pits, stores, and stones, within specified drawing window.
+     * Paints board, including pits, stores, and stones, within the specified drawing window.
      * 
      * @param g graphics context used to draw the board.
      * @param x x-coordinate of top-left corner of window.

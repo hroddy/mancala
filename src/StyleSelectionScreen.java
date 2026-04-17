@@ -1,8 +1,7 @@
 /**
  * StyleSelectionScreen.java
  * 
- * Represent the screen where players can select the style of the Mancala board (e.g., wood, metal).
- * Implements the Strategy pattern by passing the chosen BoardStyle to the game view.
+ * Context program for strategy pattern; assign the chosen BoardStyle to the game view.
  * 
  * @author Hannah Roddy
  * @author Johnny Tsai
@@ -12,52 +11,54 @@
 import java.awt.*;
 import javax.swing.*;
 
-public class StyleSelectionScreen extends JFrame{
-    private BoardStyle selectedStyle;
-
+/**
+ * Provides UI for players to select the style of the Mancala board (e.g., wood, metal).
+ */
+public class StyleSelectionScreen extends JFrame {
+    
     /**
-     * Constructor for the style selection screen with a title label and one button per available style.
-     * Clicking a button sets the style strategy and launches the game.
-     * MancalaTest will launch this screen atthe start of the application.
+     * Set up one button per available style.
+     * Clicking a button sets the style strategy of view and launches the game.
+     * MancalaTest will launch this screen at the start of the application.
      */
-    public StyleSelectionScreen() {
+    public StyleSelectionScreen(MancalaViewController viewAndController, JFrame gameFrame) {
         setTitle("Mancala - Select Board Style");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Label
-        JLabel label = new JLabel("Choose a Board Style", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-        label.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(label, BorderLayout.NORTH);
+        JLabel promptLabel = new JLabel("Choose a Board Style", SwingConstants.CENTER);
+        promptLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        promptLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        add(promptLabel, BorderLayout.NORTH);
 
-        // Style buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 20));
 
-        // Wood
         JButton woodButton = new JButton("Wood Style");
         woodButton.setPreferredSize(new Dimension(150, 50));
-        woodButton.addActionListener(e -> launchGame(new WoodStyle()));
+        woodButton.addActionListener(
+            e -> {
+                viewAndController.setStyle(new WoodStyle());
+                gameFrame.setVisible(true);
+                dispose();
+            }
+        );
         buttonPanel.add(woodButton);
 
-        // Metal
         JButton metalButton = new JButton("Metal Style");
         metalButton.setPreferredSize(new Dimension(150, 50));
-        metalButton.addActionListener(e -> launchGame(new MetalStyle()));
+        metalButton.addActionListener(
+            e -> {
+                viewAndController.setStyle(new MetalStyle());
+                gameFrame.setVisible(true);
+                dispose();
+            }
+        );
         buttonPanel.add(metalButton);
         
         add(buttonPanel, BorderLayout.CENTER);
-    }
 
-    /**
-     * Closes this screen and launches the main game window with the chosen style strategy.
-     * 
-     * @param style The BoardStyle implementation selected by the player.
-     */
-    private void launchGame(BoardStyle style) {
-        this.selectedStyle = style;
-        dispose();
-        // TO DO: MancalaView
-        // new MancalaView(selectedStyle);
+        pack();
+        setLocationRelativeTo(null);  
+        setResizable(false);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 }

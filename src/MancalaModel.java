@@ -8,6 +8,7 @@
  * @author Nishan Bhattarai
  */
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MancalaModel {
@@ -16,6 +17,7 @@ public class MancalaModel {
 
     public MancalaModel() {
         board = new MancalaBoard();
+        listeners = new ArrayList<MancalaListener>();
     }
 
     public void addListener(MancalaListener listener) {
@@ -24,5 +26,9 @@ public class MancalaModel {
 
     public void setUpBoard(int stonesPerPit) {
         board.setStonesPerPit(stonesPerPit);
+    }
+
+    public int[] getGameState() {
+        return board.getBoardCopy();
     }
 }

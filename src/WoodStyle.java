@@ -14,14 +14,14 @@ import java.awt.Color;
  * Gradient wooden implementation of board style.
  */
 public class WoodStyle extends GradientBoardStyle {
-    private static final Color MATERIAL_LIGHT = new Color(170, 120, 80);
+    private static final Color MATERIAL_LIGHT = new Color(150, 110, 70);
     private static final Color MATERIAL_DARK = new Color(90, 55, 30);
 
-    private static final Color PIT_LIGHT = new Color(130, 85, 50);
-    private static final Color PIT_DARK = new Color(70, 40, 20);
-    
-    private static final Color OUTLINE = new Color(45, 25, 10);
-    private static final double PIT_FOCUS_FACTOR = 0.35;
+    private static final Color PIT_LIGHT = new Color(140, 95, 60);
+    private static final Color PIT_DARK  = new Color(65, 35, 20);
+
+    private static final Color OUTLINE = new Color(30, 15, 5);
+    private static final double PIT_FOCUS_FACTOR = 0.2;
 
     /**
      * Initialize gradient board with wood themed colors and specified focus.
@@ -31,9 +31,8 @@ public class WoodStyle extends GradientBoardStyle {
     }
 
     /**
-     * Blends gradient colors into a primary color using arithmetic mean to maintain muddy quality of theme.
-     * 
-     * @return muddy blend of gradient colors as primary color.
+     * {@inheritDoc}
+     * Blends gradient colors into a primary color using arithmetic mean to maintain the warm, earthy quality of the theme.
      */
     public Color getBoardColor() {
         return new Color(

@@ -24,7 +24,7 @@ import java.util.Random;
 import java.awt.geom.Ellipse2D;
 
 /**
- * Provides shared color fields and methods for drawing the board, its holes (pits or stores), and the stones within them.
+ * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
  */
 public abstract class GradientBoardStyle implements BoardStyle {
     private static final double STONE_SIZE_RATIO = 0.15;
@@ -42,8 +42,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private Color endColor;
 
     /**
-     * Constructor called by concrete class.
-     * Allows concrete class to define their own colors in line with their style.
+     * Constructor for subclasses to call.
+     * Allows concrete subclasses to define their own gradient colors in line with their style.
      * 
      * @param materialLight lighter color of the board gradient.
      * @param materialDark darker color of the board gradient.
@@ -70,11 +70,12 @@ public abstract class GradientBoardStyle implements BoardStyle {
         this.pitFocusFactor = pitFocusFactor;
 
         if (pitFocusFactor < 0.5) {
-            this.startColor = materialDark;
-            this.endColor = materialLight;
-        } else {
             this.startColor = materialLight;
             this.endColor = materialDark;
+        } 
+        else {
+            this.startColor = materialDark;
+            this.endColor = materialLight;
         }
     }
 
@@ -121,21 +122,21 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Draws a circular pit at the specified location.
+     * Draws a circular pit with lighting effects at the specified location.
      * 
      * @param g graphics context used to draw the pit.
      * @param pitX x-coordinate of top-left corner of the pit's bounding box.
      * @param pitY y-coordinate of top-left corner of the pit's bounding box.
      * @param pitDiameter diameter of the pit.
      * @param stones number of stones inside the pit.
-     * @param holeID unique ID for hole, even if hole resizes stones will not dance.
+     * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
      */
     protected void drawCircularPit(Graphics g, double pitX, double pitY, double pitDiameter, int stones, int holeID) {
         drawHole(g, pitX, pitY, pitDiameter, pitDiameter, stones, holeID);
     }
 
     /**
-     * Draws a hole at the specified location with the specified dimensions.
+     * Draws a hole with lighting effects at the specified location with the specified dimensions.
      * 
      * @param g graphics context used to draw the hole.
      * @param holeX x-coordinate of top-left corner of the hole's bounding box.
@@ -143,7 +144,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * @param holeWidth width of the hole.
      * @param holeHeight height of the hole.
      * @param stones number of stones inside the hole.
-     * @param holeID unique ID for hole, even if hole resizes stones will not dance.
+     * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
      */
     protected void drawHole(Graphics g, double holeX, double holeY, double holeWidth, double holeHeight, int stones, int holeID) {
         Graphics2D g2 = (Graphics2D) g;
@@ -156,10 +157,10 @@ public abstract class GradientBoardStyle implements BoardStyle {
 
         double gradRadius = center.distance(focus) + maxRadius;
 
-        Color[] colors = {pitLight, pitDark};
+        Color[] colors = {pitDark, pitLight};
 
         RadialGradientPaint radialGrad = new RadialGradientPaint(
-            center, (float) gradRadius, focus, new float[]{0.0f, 1.0f}, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE
+            center, (float) gradRadius, focus, new float[]{0.0f, 0.75f}, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE
         );
 
         double arcWidth = holeWidth;
@@ -184,48 +185,53 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * @param g2 graphics context used to draw the stones.
      * @param holeShape the hole in which to draw stones.
      * @param stones number of stones to draw.
-     * @param holeID unique ID for hole, even if hole resizes stones will not dance.
+     * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
      */
     protected void drawStonesWithinHole(Graphics2D g2, Shape holeShape, int stones, int holeID) {
         Rectangle2D bounds = holeShape.getBounds2D();
-        double stoneSize = bounds.getWidth() * STONE_SIZE_RATIO;
+        double stoneDiameter = bounds.getWidth() * STONE_SIZE_RATIO;
 
         Random seed = new Random(holeID);
 
         for (int i = 0; i < stones; i++) {
             double stoneX, stoneY;
             do {
-            stoneX = bounds.getX() + (bounds.getWidth() - stoneSize) * seed.nextDouble();
-            stoneY = bounds.getY() + (bounds.getHeight() - stoneSize) * seed.nextDouble();
-            } while (!holeShape.contains(stoneX, stoneY, stoneSize, stoneSize));
+            stoneX = bounds.getX() + (bounds.getWidth() - stoneDiameter) * seed.nextDouble();
+            stoneY = bounds.getY() + (bounds.getHeight() - stoneDiameter) * seed.nextDouble();
+            } while (!holeShape.contains(stoneX, stoneY, stoneDiameter, stoneDiameter));
 
-            drawStone(g2, stoneX, stoneY, stoneSize);
+            drawStone(g2, stoneX, stoneY, stoneDiameter);
         }
     }
 
     /**
+     * Draws the stone with lighting effect at the specified location with the specified dimensions.
      * 
+     * @param g2 graphics context used to draw the stones.
+     * @param stoneX the x-coordinate of top-left corner of stone's bounding box.
+     * @param stoneY the y-coordinate of top-left corner of stone's bounding box
+     * @param stoneDiameter the diameter of the stone
      */
-    protected void drawStone(Graphics2D g2, double stoneX, double stoneY, double stoneSize){
-        double radius = stoneSize * 0.5;
+    protected void drawStone(Graphics2D g2, double stoneX, double stoneY, double stoneDiameter){
+        double radius = stoneDiameter * 0.5;
 
         Point2D center = new Point2D.Double(stoneX + radius, stoneY + radius);
-        Point2D focus = new Point2D.Double(stoneX + (stoneSize * (1 - pitFocusFactor)), stoneY + (stoneSize * (1 - pitFocusFactor)));
+        Point2D focus = new Point2D.Double(stoneX + (stoneDiameter * (1 - pitFocusFactor)), stoneY + (stoneDiameter * (1 - pitFocusFactor)));
 
         double gradRadius = center.distance(focus) + radius;
 
         Color[] colors = {materialLight, materialDark};
 
         RadialGradientPaint radialGrad = new RadialGradientPaint(
-            center, (float) gradRadius, focus, new float[]{0.0f, 1.0f}, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE
+            center, (float) gradRadius, focus, new float[]{0.0f, 0.75f}, colors, MultipleGradientPaint.CycleMethod.NO_CYCLE
         );
 
-        Ellipse2D stoneShape = new Ellipse2D.Double(stoneX, stoneY, stoneSize, stoneSize);
+        Ellipse2D stoneShape = new Ellipse2D.Double(stoneX, stoneY, stoneDiameter, stoneDiameter);
 
         g2.setPaint(radialGrad);
         g2.fill(stoneShape);
 
-        g2.setStroke(new BasicStroke((float)(stoneSize * 0.05))); 
+        g2.setStroke(new BasicStroke((float)(stoneDiameter * 0.05))); 
         g2.setColor(outline);              
         g2.draw(stoneShape);
     }

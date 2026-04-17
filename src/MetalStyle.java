@@ -14,14 +14,14 @@ import java.awt.Color;
  * Gradient metallic implementation of board style.
  */
 public class MetalStyle extends GradientBoardStyle {
-    private static final Color MATERIAL_LIGHT = new Color(190, 195, 200); 
-    private static final Color MATERIAL_DARK = new Color(45, 50, 55);
+    private static final Color MATERIAL_LIGHT = new Color(155, 165, 180);
+    private static final Color MATERIAL_DARK = new Color(55, 60, 70);
 
-    private static final Color PIT_LIGHT = new Color(110, 115, 120);
-    private static final Color PIT_DARK = new Color(20, 25, 30);
-    
-    private static final Color OUTLINE = new Color(220, 220, 230);
-    private static final double PIT_FOCUS_FACTOR = 0.20;
+    private static final Color PIT_LIGHT = new Color(125, 130, 135);
+    private static final Color PIT_DARK = new Color(45, 50, 60);
+
+    private static final Color OUTLINE = new Color(165, 170, 180);
+    private static final double PIT_FOCUS_FACTOR = 0.25;
     
     /**
      * Initialize gradient board with metal themed colors and specified focus.
@@ -31,11 +31,9 @@ public class MetalStyle extends GradientBoardStyle {
     }
 
     /**
-     * Blends gradient colors into a primary color using root-mean-square to maintain luminant quality of theme.
-     * 
-     * @return luminant blend of gradient colors as primary color.
+     * {@inheritDoc}
+     * Blends gradient colors into a primary color using root-mean-square to maintain the luminous quality of the theme.
      */
-    @Override
     public Color getBoardColor() {
         int r = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2);
         int g = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2);
