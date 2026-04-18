@@ -8,20 +8,20 @@
  * @author Nishan Bhattarai
  */
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GradientPaint;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
-import java.awt.RadialGradientPaint;
 import java.awt.MultipleGradientPaint;
-import java.awt.BasicStroke;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.RadialGradientPaint;
+import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.geom.Rectangle2D;
-import java.util.Random;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.util.Random;
 
 /**
  * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
@@ -80,6 +80,41 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
+     * Computes the pixel boundaries of all 14 holes based on current board dimensions.
+     * Single source of truth for layout math — shared by drawBoard and getPitAt.
+     * 
+     * @param boardWidth total width of the board panel.
+     * @param boardHeight total height of the board panel.
+     * @return array of {x, y, width, height} for each of the 14 pit indices.
+     */
+    private double[][] computeHoleBounds(int boardWidth, int boardHeight) {
+        double[][] bounds = new double[14][4];
+
+        double gap = boardWidth / 50.0;
+        double gridWidth = (boardWidth - (gap * 9)) / 8;
+        double gridHeight = (boardHeight - (gap * 3)) / 2;
+        double pitDiameter = Math.min(gridWidth, gridHeight);
+        double horiOffset = (gridWidth - pitDiameter) / 2;
+        double vertOffset = (gridHeight - pitDiameter) / 2;
+        double storeHeight = 2 * (pitDiameter + vertOffset) + gap;
+
+        // Left store — Player B (index 13)
+        bounds[13] = new double[]{gap + horiOffset, gap + vertOffset, pitDiameter, storeHeight};
+
+        // Right store — Player A (index 6)
+        bounds[6] = new double[]{boardWidth - gap - gridWidth + horiOffset, gap + vertOffset, pitDiameter, storeHeight};
+
+        // 6 columns of pits
+        for (int i = 0; i < 6; i++) {
+            double pitX = (gap * (i + 2)) + (gridWidth * (i + 1)) + horiOffset;
+            bounds[i]      = new double[]{pitX, gridHeight + 2 * gap + vertOffset, pitDiameter, pitDiameter};
+            bounds[12 - i] = new double[]{pitX, gap + vertOffset, pitDiameter, pitDiameter};
+        }
+
+        return bounds;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void drawBoard(Graphics g, int boardX, int boardY, int boardWidth, int boardHeight, int[] gameState) {
@@ -89,50 +124,31 @@ public abstract class GradientBoardStyle implements BoardStyle {
         g2.setPaint(new GradientPaint(boardX, boardY, startColor, boardX + boardWidth, boardY + boardHeight, endColor));
         g2.fillRect(boardX, boardY, boardWidth, boardHeight);
 
-        double gap = boardWidth / 50.0;
-        double gridWidth = (boardWidth - (gap * 9)) / 8;
-        double gridHeight = (boardHeight - (gap * 3)) / 2;
+        double[][] bounds = computeHoleBounds(boardWidth, boardHeight);
 
-        double pitDiameter = Math.min(gridWidth, gridHeight);
+        // Draw stores
+        drawHole(g2, bounds[13][0], bounds[13][1], bounds[13][2], bounds[13][3], gameState[13], 13);
+        drawHole(g2, bounds[6][0],  bounds[6][1],  bounds[6][2],  bounds[6][3],  gameState[6],  6);
 
-        double horiOffset = (gridWidth - pitDiameter) / 2;
-        double vertOffset = (gridHeight - pitDiameter) / 2;
-        
-        double storeWidth = pitDiameter;
-        double storeHeight = 2 * (pitDiameter + vertOffset) + gap;
-
-        double leftStoreX = boardX + gap + horiOffset;
-        double leftStoreY = boardY + gap + vertOffset;
-
-        drawHole(g2, leftStoreX, leftStoreY, storeWidth, storeHeight, gameState[13], 13);
-
+        // Draw pits
         for (int i = 0; i < 6; i++) {
-            double pitX = boardX + (gap * (i + 2)) + (gridWidth * (i + 1)) + horiOffset;
-            double topPitY = boardY + gap + vertOffset;
-            double botPitY = boardY + gridHeight + 2 * gap + vertOffset; 
-
-            drawCircularPit(g2, pitX, topPitY, pitDiameter, gameState[12 - i], 12 - i);
-            drawCircularPit(g2, pitX, botPitY, pitDiameter, gameState[i], i);
+            drawHole(g2, bounds[i][0],      bounds[i][1],      bounds[i][2],      bounds[i][3],      gameState[i],      i);
+            drawHole(g2, bounds[12-i][0],   bounds[12-i][1],   bounds[12-i][2],   bounds[12-i][3],   gameState[12-i],   12-i);
         }
-
-        double rightStoreX = boardX + boardWidth - gap - gridWidth + horiOffset;
-        double rightStoreY = leftStoreY;
-
-        drawHole(g2, rightStoreX, rightStoreY, storeWidth, storeHeight, gameState[6], 6);
     }
 
     /**
-     * Draws a circular pit with lighting effects at the specified location.
-     * 
-     * @param g graphics context used to draw the pit.
-     * @param pitX x-coordinate of top-left corner of the pit's bounding box.
-     * @param pitY y-coordinate of top-left corner of the pit's bounding box.
-     * @param pitDiameter diameter of the pit.
-     * @param stones number of stones inside the pit.
-     * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
+     * {@inheritDoc}
+     * Uses computeHoleBounds to map click coordinates to a pit index.
      */
-    protected void drawCircularPit(Graphics g, double pitX, double pitY, double pitDiameter, int stones, int holeID) {
-        drawHole(g, pitX, pitY, pitDiameter, pitDiameter, stones, holeID);
+    public int getPitAt(int clickX, int clickY, int boardWidth, int boardHeight) {
+        double[][] bounds = computeHoleBounds(boardWidth, boardHeight);
+        for (int i = 0; i < 14; i++) {
+            if (clickX >= bounds[i][0] && clickX <= bounds[i][0] + bounds[i][2] &&
+                clickY >= bounds[i][1] && clickY <= bounds[i][1] + bounds[i][3])
+                return i;
+        }
+        return -1;
     }
 
     /**
@@ -235,4 +251,5 @@ public abstract class GradientBoardStyle implements BoardStyle {
         g2.setColor(outline);              
         g2.draw(stoneShape);
     }
+
 }
