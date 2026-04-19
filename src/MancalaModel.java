@@ -127,16 +127,18 @@ public class MancalaModel {
      * @param pitIndex which pit to move from
      */
     public void makeMove(int pitIndex) {
-        if (gameOver) return;      // reject the move after the game is over
+        if (gameOver) return;
         if (pitIndex < 0 || pitIndex > 12 || pitIndex == 6)
             return;
-        if (isPlayerATurn && pitIndex > 5)  //Make sure that the player picks from their own side
+        if (isPlayerATurn && pitIndex > 5)
             return;
         if (!isPlayerATurn && pitIndex < 7)
             return;
-        if (board.getStonesInPit(pitIndex) == 0)         //can't pick an empty pit
+        if (board.getStonesInPit(pitIndex) == 0)
             return;
-        undoManager.saveState(board.getBoardCopy(), isPlayerATurn);     // Save the board so we can undo later if needed
+
+        undoManager.saveState(board.getBoardCopy(), isPlayerATurn);
+
         int stones = board.moveStonesOut(pitIndex);
         int currentIndex = pitIndex;
 
@@ -146,17 +148,39 @@ public class MancalaModel {
                 continue;
             if (!isPlayerATurn && currentIndex == 6)
                 continue;
-
             board.addStoneToPit(currentIndex);
             stones--;
         }
-        boolean landedInOwnStore = (isPlayerATurn && currentIndex == 6) || (!isPlayerATurn && currentIndex == 13);
+
+        boolean landedInOwnStore = (isPlayerATurn && currentIndex == 6) || 
+                                    (!isPlayerATurn && currentIndex == 13);
+
+        // Capture rule: last stone landed in an empty pit on current player's own side
+        boolean landedOnOwnSide = (isPlayerATurn && currentIndex >= 0 && currentIndex <= 5) ||
+                                (!isPlayerATurn && currentIndex >= 7 && currentIndex <= 12);
+
+        if (landedOnOwnSide && board.getStonesInPit(currentIndex) == 1) {
+            int oppositeIndex = board.getOppositeIndex(currentIndex);
+            int oppositeStones = board.getStonesInPit(oppositeIndex);
+            if (oppositeStones > 0) {
+                board.moveStonesOut(currentIndex);   // take the landing stone
+                board.moveStonesOut(oppositeIndex);  // take all opposite stones
+                int store = isPlayerATurn ? 6 : 13;
+                for (int i = 0; i < oppositeStones + 1; i++) {
+                    board.addStoneToPit(store);
+                }
+            }
+        }
+
         if (!landedInOwnStore) {
             isPlayerATurn = !isPlayerATurn;
+            undoManager.resetUndoCount(); // new turn, fresh undo count
         }
+
         checkGameOver();
         notifyListeners();
     }
+
     /**
      * Checks if one side of the board is completely empty.
      * If it is true the game is over. Any Stones left on the other side get moved into that player's store.
