@@ -10,7 +10,7 @@
  */
 
 import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 /**
  * Implementations provide rendering logic for a specific board design.
@@ -24,14 +24,12 @@ public interface BoardStyle {
     /**
      * Paints board, including pits, stores, and stones, within the specified drawing window.
      * 
-     * @param g graphics context used to draw the board.
-     * @param x x-coordinate of top-left corner of window.
-     * @param y y-coordinate of top-left corner of window.
-     * @param width width of the window.
-     * @param height height of the window.
+     * @param g2 graphics context used to draw the board.
+     * @param boardWidth width of the window.
+     * @param boardHeight height of the window.
      * @param gameState array containing stone counts for all pits and stores.
      */
-    void drawBoard(Graphics g, int x, int y, int width, int height, int[] gameState);
+    void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState);
 
     /**
      * Returns the pit index at the given coordinates, or -1 if no pit was clicked.
@@ -39,9 +37,7 @@ public interface BoardStyle {
      *
      * @param clickX x-coordinate of mouse click relative to the board panel.
      * @param clickY y-coordinate of mouse click relative to the board panel.
-     * @param boardWidth total width of the board panel.
-     * @param boardHeight total height of the board panel.
      * @return pit index (0-13) if a pit was clicked, -1 otherwise.
      */
-    int getPitAt(int clickX, int clickY, int boardWidth, int boardHeight);
+    int getPitAt(int clickX, int clickY);
 }

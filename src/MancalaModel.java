@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MancalaModel {
+    public static final int MAX_PIT_START_STONES = 4;
+    public static final int TOTAL_PITS = 12;
     /**
      * The underlying board holding stone counts for all 14 pits.
      */
