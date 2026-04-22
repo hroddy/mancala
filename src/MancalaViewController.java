@@ -62,7 +62,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (style != null) {
-                    style.drawBoard(g2, getWidth(), getHeight(), model.getBoard().getBoardCopy());
+                    style.drawBoard(g2, getWidth(), getHeight(), model.getBoard().getBoardCopy(), model.isPlayerATurn(), model.isGameOver());
                 }
             }
         };

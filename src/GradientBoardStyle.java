@@ -24,28 +24,30 @@ import java.util.Random;
  * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
  */
 public abstract class GradientBoardStyle implements BoardStyle {
-    private static final int NUM_HOLES = MancalaModel.TOTAL_PITS + 2;
-    private static final int MAX_STONES = MancalaModel.TOTAL_PITS * MancalaModel.MAX_PIT_START_STONES;
-    private static final int NUM_HORI_GAPS = MancalaModel.TOTAL_PITS / 2 + 3;
-    private static final double SIN_45 = Math.sin(Math.PI / 4);
+    private static final int RANDOM_RETRIES = 100;
+    private static final double MIN_DIST = 0.15;
+    private static final double MIN_SQUARE_DIST = MIN_DIST * MIN_DIST;
     private static final double STONE_SIZE_RATIO = 0.15;
     private static final double OUTLINE_RATIO = 0.03;
-    private static final double GAP_RATIO = 0.01;
+    private static final double BOLD_OUTLINE_RATIO = 0.05;
+    private static final double GAP_RATIO = 0.02;
     private static final float[] GRAD_RATIOS = {0f, 0.75f};
+
+    private final int numHoles;
+    private final int maxStones;
+    private final int numHoriGaps;
 
     private final Color outlineColor;
     private final double pitFocusFactor;
-
     private final Color[] boardGradientColors;
     private final Color[] holeGradientColors; 
     private final Color[] stoneGradientColors;
 
-    private final double[][] horiStoneDistRatios = new double[NUM_HOLES][MAX_STONES];
-    private final double[][] vertStoneDistRatios = new double[NUM_HOLES][MAX_STONES];
+    private final double[][] horiStoneDistRatios;
+    private final double[][] vertStoneDistRatios;
 
     private int lastBoardWidth;
     private int lastBoardHeight;
-
     private double pitDiameter;
 
     private final RoundRectangle2D[] holeShapes = new RoundRectangle2D[NUM_HOLES];
@@ -55,8 +57,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private Font labelFont;
     private float labelAX, labelAY, labelBX, labelBY;
     
-    private final double[][] stoneX = new double[NUM_HOLES][MAX_STONES];
-    private final double[][] stoneY = new double[NUM_HOLES][MAX_STONES];
+    private final double[][] stoneX;
+    private final double[][] stoneY;
     private Ellipse2D masterStoneShape;
     private RadialGradientPaint masterStonePaint;
     private BasicStroke stoneStroke;
@@ -69,9 +71,11 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * @param materialDark darker color of the board gradient.
      * @param pitLight lighter color of the pit (and store) gradient.
      * @param pitDark darker color of the pit (and store) gradient.
-     * @param outline color of outline around the pit (and store).
+     * @param outlineColor color of outline around the pit (and store).
      * @param pitFocusFactor relative position of radial gradient focus point within a hole;
      *                       expressed as a fraction of the hole's width and height.
+     * @param maxPitStart max number of stones per pit at start of Mancala game.
+     * @param pitsPerSide number of pits for each of the pair of players.
      */
     protected GradientBoardStyle(
         Color materialLight, 
@@ -79,7 +83,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
         Color pitLight, 
         Color pitDark, 
         Color outlineColor, 
-        double pitFocusFactor
+        double pitFocusFactor,
+        int maxPitStart,
+        int pitsPerSide
     ) { 
         this.pitFocusFactor = pitFocusFactor;
         this.outlineColor = outlineColor; 
@@ -88,35 +94,38 @@ public abstract class GradientBoardStyle implements BoardStyle {
         holeGradientColors = new Color[]{pitDark, pitLight};
         stoneGradientColors = new Color[]{materialLight, materialDark};
         
-        setStoneDistRatios();
-    }
+        numHoles = 2 * pitsPerSide + 2;
+        maxStones = maxPitStart * pitsPerSide * 2;
+        numHoriGaps = pitsPerSide + 3;
 
-    private void setStoneDistRatios() {
-        Random random = new Random();
-        for (int hole = 0; hole < NUM_HOLES; hole++) {
-            for (int stone = 0; stone < MAX_STONES; stone++) {
-                horiStoneDistRatios[hole][stone] = random.nextDouble();
-                vertStoneDistRatios[hole][stone] = random.nextDouble();
-            }
-        }
+        horiStoneDistRatios = new double[numHoles][maxStones];
+        vertStoneDistRatios = new double[numHoles][maxStones];
+
+        holeShapes = new RoundRectangle2D[numHoles];
+        holePaints = new RadialGradientPaint[numHoles];
+
+        stoneX = new double[numHoles][maxStones];
+        stoneY = new double[numHoles][maxStones];
+
+        initStoneDistRatios();
     }
 
     /**
      * {@inheritDoc}
      */
-    public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState) {
+    public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
         g2.setPaint(new LinearGradientPaint(0, 0, boardWidth, boardHeight, GRAD_RATIOS, boardGradientColors));
         g2.fillRect(0, 0, boardWidth, boardHeight);
 
         if(lastBoardHeight != boardHeight || lastBoardWidth != boardWidth) {
-            setHoleShapes(boardWidth, boardHeight);
-            setHoleStroke();
-            setHolePaints();
-            setStoneLocations();
-            setMasterStoneShape();
-            setStoneStroke();
-            setMasterStonePaint();
-            setLabelPositions(g2);
+            computeHoleShapes(boardWidth, boardHeight);
+            computeHoleStroke();
+            computeHolePaints();
+            computeMasterStoneShape();
+            computeStoneLocations();
+            computeStoneStroke();
+            computeMasterStonePaint();
+            computeLabelPositions(g2);
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
@@ -147,19 +156,35 @@ public abstract class GradientBoardStyle implements BoardStyle {
             g2.drawString(mancalaLetters[i], labelAX, labelAY + i * lineHeight);
         }
         g2.drawString("A", labelAX, labelAY +(mancalaLetters.length + 1)* lineHeight);
+
+        renderHoles(g2, gameState, isPlayerATurn, isGameOver);
     }
 
     /**
-     * Computes the pixel boundaries of all holes based on current board dimensions.
-     * Single source of truth for layout math — shared by drawBoard and getPitAt.
+     * {@inheritDoc}
+     */
+    public int getPitAt(int clickX, int clickY) {
+        for (int i = 0; i < numHoles; i++) {
+            if (holeShapes[i].contains(clickX, clickY)) {
+                if (i != numHoles - 1 && i != numHoles / 2 -1) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Based on current board dimensions, computes hole shapes with locations incorporated.
+     * Updates cache of hole shapes.
      * 
      * @param boardWidth total width of the board panel.
      * @param boardHeight total height of the board panel.
      */
-    private void setHoleShapes(int boardWidth, int boardHeight) {
+    private void computeHoleShapes(int boardWidth, int boardHeight) {
         double gap = boardWidth * GAP_RATIO;
-        double cols = NUM_HORI_GAPS - 1;
-        double gridWidth = (boardWidth - (gap * NUM_HORI_GAPS)) / cols;
+        double cols = numHoriGaps - 1;
+        double gridWidth = (boardWidth - (gap * numHoriGaps)) / cols;
         double gridHeight = (boardHeight - (gap * 3)) / 2;
         pitDiameter = Math.min(gridWidth, gridHeight);  
         double horiOffset = (gridWidth - pitDiameter) / 2;
@@ -167,35 +192,46 @@ public abstract class GradientBoardStyle implements BoardStyle {
         double storeHeight = 2 * (pitDiameter + vertOffset) + gap;
 
         // Left store — Player B
-        holeShapes[NUM_HOLES - 1] = new RoundRectangle2D.Double(
+        holeShapes[numHoles - 1] = new RoundRectangle2D.Double(
             gap + horiOffset, gap + vertOffset, pitDiameter, storeHeight, pitDiameter, pitDiameter
         );
 
         // Right store — Player A
-        holeShapes[NUM_HOLES / 2 - 1] = new RoundRectangle2D.Double(
+        holeShapes[numHoles / 2 - 1] = new RoundRectangle2D.Double(
             boardWidth - gap - gridWidth + horiOffset, gap + vertOffset, pitDiameter, storeHeight, pitDiameter, pitDiameter
         );
         
-        // 6 columns of pits
-        for (int pit = 0; pit < MancalaModel.TOTAL_PITS / 2; pit++) {
+        // Columns of pits
+        int numPits = numHoles - 2;
+        int pitsPerSide = numPits / 2;
+        for (int pit = 0; pit < pitsPerSide; pit++) {
             double pitX = (gap * (pit + 2)) + (gridWidth * (pit + 1)) + horiOffset;
             double pitBotY = gridHeight + 2 * gap + vertOffset;
             double pitTopY = gap + vertOffset;
             holeShapes[pit] = new RoundRectangle2D.Double(
                 pitX, pitBotY, pitDiameter, pitDiameter, pitDiameter, pitDiameter
             );
-            holeShapes[MancalaModel.TOTAL_PITS - pit] = new RoundRectangle2D.Double(
+            holeShapes[numPits - pit] = new RoundRectangle2D.Double(
                 pitX, pitTopY, pitDiameter, pitDiameter, pitDiameter, pitDiameter
             );
         }
     }
 
-    private void setHoleStroke() {
-        holeStroke = new BasicStroke((float)(pitDiameter * OUTLINE_RATIO));
+    /**
+     * Based on current pit dimensions, computes the outline stroke for holes.
+     * Updates cached hole stroke.
+     */
+    private void computeHoleStroke() {
+        defaultHoleStroke = new BasicStroke((float)(pitDiameter * OUTLINE_RATIO));
+        boldHoleStroke = new BasicStroke((float)(pitDiameter * BOLD_OUTLINE_RATIO));
     }
 
-    private void setHolePaints() {
-        for(int hole = 0; hole < NUM_HOLES; hole++){
+    /**
+     * For each hole, compute its paint based on its dimensions and the pit focus factor.
+     * Updates cache of hole paints.
+     */
+    private void computeHolePaints() {
+        for(int hole = 0; hole < numHoles; hole++){
             RoundRectangle2D holeShape = holeShapes[hole];
 
             Point2D center = new Point2D.Double(holeShape.getCenterX(), holeShape.getCenterY());
@@ -209,35 +245,56 @@ public abstract class GradientBoardStyle implements BoardStyle {
         }
     }
 
+    /**
+     * For each hole, compute fixed stone locations based on hole dimensions and cached ratios
+     */
+    private void computeStoneLocations() {
+        double stoneDiameter = masterStoneShape.getWidth();
+        double stoneRadius = stoneDiameter / 2.0;
 
-    private void setStoneLocations() {
-        double zoneOffset = pitDiameter - (pitDiameter * SIN_45);
-        double outOfZone = (2 * zoneOffset) + (pitDiameter * STONE_SIZE_RATIO);
-
-        for (int hole = 0; hole < NUM_HOLES; hole++) {
+        for (int hole = 0; hole < numHoles; hole++) {
             RoundRectangle2D holeShape = holeShapes[hole];
-            
-            double holeHeight = holeShape.getHeight();
-            double holeWidth = holeShape.getWidth();
-            
-            for (int stone = 0; stone < MAX_STONES; stone++) {
-                stoneX[hole][stone] = holeShape.getX() + zoneOffset + (holeWidth - outOfZone) * horiStoneDistRatios[hole][stone];
-                stoneY[hole][stone] = holeShape.getY() + zoneOffset + (holeHeight - outOfZone) * vertStoneDistRatios[hole][stone];
+
+            double maxHori = (holeShape.getWidth() - 2 * stoneDiameter) / 2.0;
+            double maxVert = (holeShape.getHeight() - 2 * stoneDiameter) / 2.0 - maxHori;
+
+            for (int stone = 0; stone < maxStones; stone++) {
+                double xRatio = horiStoneDistRatios[hole][stone];
+                double yRatio = vertStoneDistRatios[hole][stone];
+
+                double xDisplace = xRatio * maxHori;
+                double yLimit = maxVert + Math.sqrt((maxHori * maxHori) - (xDisplace * xDisplace));
+                double yDisplace = yRatio * yLimit;
+
+                stoneX[hole][stone] = holeShape.getCenterX() + xDisplace - stoneRadius;
+                stoneY[hole][stone] = holeShape.getCenterY() + yDisplace - stoneRadius;
             }
         }
     }
 
-    private void setMasterStoneShape() {
+    /**
+     * Based on the width of the holes, compute stone shape template.
+     * Update cached stone shape template.
+     */
+    private void computeMasterStoneShape() {
         double stoneDiameter = pitDiameter * STONE_SIZE_RATIO;
         masterStoneShape = new Ellipse2D.Double(0, 0, stoneDiameter, stoneDiameter);
     }
 
-    private void setStoneStroke() {
+    /**
+     * Based on current stone template dimension, compute its outline stroke.
+     * Updates cached stone stroke.
+     */
+    private void computeStoneStroke() {
         double stoneDiameter = masterStoneShape.getWidth();
         stoneStroke = new BasicStroke((float)(stoneDiameter * OUTLINE_RATIO));
     }
 
-    private void setMasterStonePaint() {
+    /**
+     * Based on current stone template dimension and the pit focus factor, compute its paint.
+     * Updated cached stone paint.
+     */
+    private void computeMasterStonePaint() {
         double stoneDiameter = masterStoneShape.getWidth();
         double radius = stoneDiameter / 2.0;
 
@@ -257,7 +314,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * @param g2 graphics context needed to measure how wide and tall the letters are.
      */
 
-    private void setLabelPositions(Graphics2D g2){
+    private void computeLabelPositions(Graphics2D g2){
         labelFont = new Font("Arial", Font.BOLD, (int)(pitDiameter*0.18));
         g2.setFont(labelFont);
         java.awt.FontMetrics fm = g2.getFontMetrics();
@@ -275,36 +332,56 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Draws all holes with lighting effects.
+     * Renders all holes with lighting effects.
      * 
      * @param g2 graphics context used to draw the hole.
+     * @param gameState array containing stone counts for all pits and stores.
+     * @param isPlayerATurn if true player A's pit outlines will be bolded, if false player B's pit outlines will be bolded.
+     * @param isGameOver if true no player's pit outlines will be bolded, if false one player's pit outlines will be bolded.
      */
-    private void drawHoles(Graphics2D g2, int[] gameState) {
-        for(int hole = 0; hole < NUM_HOLES; hole++){
+    private void renderHoles(Graphics2D g2, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
+        int storeA = numHoles / 2 - 1;
+
+        for(int hole = 0; hole < numHoles; hole++){
             RoundRectangle2D holeShape = holeShapes[hole];
             
             g2.setPaint(holePaints[hole]);
             g2.fill(holeShape);
 
-            g2.setStroke(holeStroke); 
+            if(isGameOver) {
+                g2.setStroke(defaultHoleStroke);
+            }
+            else if (hole < storeA) {
+                g2.setStroke(isPlayerATurn ? boldHoleStroke : defaultHoleStroke);
+            }
+            else if (hole == storeA) {
+                g2.setStroke(defaultHoleStroke);
+            }
+            else if (hole > storeA && hole < numHoles - 1) {
+                g2.setStroke(isPlayerATurn ? defaultHoleStroke : boldHoleStroke);
+            }
+            else {
+                g2.setStroke(defaultHoleStroke);
+            }
+
             g2.setColor(outlineColor);              
             g2.draw(holeShape);
 
             int stones = gameState[hole];
             if (stones > 0) {
-                drawStonesWithinHole(g2, stones, hole);
+                renderStonesWithinHole(g2, stones, hole);
             }
         }
     }
 
     /**
-     * Draws the specified number of stones within the specified hole.
+     * Renders the specified number of stones with lighting effects within the specified hole.
      * 
      * @param g2 graphics context used to draw the stones.
      * @param stones number of stones to draw.
      * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
      */
-    protected void drawStonesWithinHole(Graphics2D g2, int stones, int holeID) {
+    private void renderStonesWithinHole(Graphics2D g2, int stones, int holeID) {
         for (int stone = 0; stone < stones; stone++) {
             double x = stoneX[holeID][stone];
             double y = stoneY[holeID][stone];
@@ -322,15 +399,39 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * {@inheritDoc}
-     * Checks which hole contains the click point and returns the corresponding index.
+     * Initialize distance ratios for the x and y of all possible stones.
      */
-    public int getPitAt(int clickX, int clickY) {
-        for (int i = 0; i < NUM_HOLES; i++) {
-            if (holeShapes[i].contains(clickX, clickY)) {
-                return i;
+    private void initStoneDistRatios() {
+        Random random = new Random();
+        for (int hole = 0; hole < numHoles; hole++) {
+            for (int stone = 0; stone < maxStones; stone++) {
+                int tries = 0;
+                double x, y;
+                do {
+                    x = random.nextDouble() * 2 - 1;
+                    y = random.nextDouble() * 2 - 1;
+                    tries++;
+                } while(overlaps(hole, stone, x, y) && tries < RANDOM_RETRIES);
+
+                horiStoneDistRatios[hole][stone] = x;
+                vertStoneDistRatios[hole][stone] = y;
             }
         }
-        return -1;
+    }
+
+    /**
+     * Marks stone as overlap if distance with another stone less than predefined minimum.
+     *
+     * @return true if overlap, false if not.
+     */
+    private boolean overlaps(int hole, int stone, double x, double y){
+        for (int i = 0; i < stone; i++) {
+            double xDist = x - horiStoneDistRatios[hole][i];
+            double yDist = y - vertStoneDistRatios[hole][i];
+            if (xDist * xDist + yDist * yDist < MIN_SQUARE_DIST) {
+                return true;
+            }
+        }
+        return false;
     }
 }

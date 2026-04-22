@@ -21,7 +21,7 @@ public class StyleSelectionScreen extends JFrame {
      * Clicking a button sets the style strategy of view and launches the game.
      * MancalaTest will launch this screen at the start of the application.
      */
-    public StyleSelectionScreen(MancalaViewController viewAndController, JFrame gameFrame) {
+    public StyleSelectionScreen(MancalaViewController viewAndController, JFrame gameFrame, int maxPitStart, int pitsPerSide) {
         setTitle("Mancala - Select Board Style");
         setLayout(new BorderLayout());
 
@@ -36,7 +36,7 @@ public class StyleSelectionScreen extends JFrame {
         woodButton.setPreferredSize(new Dimension(150, 50));
         woodButton.addActionListener(
             e -> {
-                viewAndController.setStyle(new WoodStyle());
+                viewAndController.setStyle(new WoodStyle(maxPitStart, pitsPerSide));
                 gameFrame.setVisible(true);
                 viewAndController.promptStoneCount();
                 dispose();
@@ -48,7 +48,7 @@ public class StyleSelectionScreen extends JFrame {
         metalButton.setPreferredSize(new Dimension(150, 50));
         metalButton.addActionListener(
             e -> {
-                viewAndController.setStyle(new MetalStyle());
+                viewAndController.setStyle(new MetalStyle(maxPitStart, pitsPerSide));
                 gameFrame.setVisible(true);
                 viewAndController.promptStoneCount();
                 dispose();
