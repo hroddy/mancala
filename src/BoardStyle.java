@@ -28,8 +28,10 @@ public interface BoardStyle {
      * @param boardWidth width of the window.
      * @param boardHeight height of the window.
      * @param gameState array containing stone counts for all pits and stores.
+     * @param isPlayerATurn whether it is currently player A or player B's turn.
+     * @param isGameOver whether the game is over or not.
      */
-    void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState);
+    void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver);
 
     /**
      * Returns the index of the pit at the given coordinates, or -1 if no valid pit was clicked.

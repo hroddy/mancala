@@ -143,12 +143,13 @@ public class MancalaModel {
      * @param pitIndex which pit to move from
      */
     public void makeMove(int pitIndex) {
+        int totalPits = pitsPerSide * 2;
         if (gameOver) return;
-        if (pitIndex < 0 || pitIndex > 12 || pitIndex == 6)
+        if (pitIndex < 0 || pitIndex > totalPits || pitIndex == pitsPerSide)
             return;
-        if (isPlayerATurn && pitIndex > 5)
+        if (isPlayerATurn && pitIndex > pitsPerSide)
             return;
-        if (!isPlayerATurn && pitIndex < 7)
+        if (!isPlayerATurn && pitIndex < pitsPerSide)
             return;
         if (board.getStonesInPit(pitIndex) == 0)
             return;
@@ -159,21 +160,21 @@ public class MancalaModel {
         int currentIndex = pitIndex;
 
         while (stones > 0) {
-            currentIndex = (currentIndex + 1) % 14;
-            if (isPlayerATurn && currentIndex == 13)
+            currentIndex = (currentIndex + 1) % (totalPits + 2);
+            if (isPlayerATurn && currentIndex == totalPits + 1)
                 continue;
-            if (!isPlayerATurn && currentIndex == 6)
+            if (!isPlayerATurn && currentIndex == pitsPerSide)
                 continue;
             board.addStoneToPit(currentIndex);
             stones--;
         }
 
-        boolean landedInOwnStore = (isPlayerATurn && currentIndex == 6) || 
-                                    (!isPlayerATurn && currentIndex == 13);
+        boolean landedInOwnStore = (isPlayerATurn && currentIndex == pitsPerSide) || 
+                                    (!isPlayerATurn && currentIndex == totalPits + 1);
 
         // Capture rule: last stone landed in an empty pit on current player's own side
-        boolean landedOnOwnSide = (isPlayerATurn && currentIndex >= 0 && currentIndex <= 5) ||
-                                (!isPlayerATurn && currentIndex >= 7 && currentIndex <= 12);
+        boolean landedOnOwnSide = (isPlayerATurn && currentIndex >= 0 && currentIndex < pitsPerSide) ||
+                                (!isPlayerATurn && currentIndex > pitsPerSide && currentIndex <= totalPits);
 
         if (landedOnOwnSide && board.getStonesInPit(currentIndex) == 1) {
             int oppositeIndex = board.getOppositeIndex(currentIndex);
@@ -181,7 +182,7 @@ public class MancalaModel {
             if (oppositeStones > 0) {
                 board.moveStonesOut(currentIndex);   // take the landing stone
                 board.moveStonesOut(oppositeIndex);  // take all opposite stones
-                int store = isPlayerATurn ? 6 : 13;
+                int store = isPlayerATurn ? pitsPerSide : totalPits + 1;
                 for (int i = 0; i < oppositeStones + 1; i++) {
                     board.addStoneToPit(store);
                 }
@@ -205,21 +206,21 @@ public class MancalaModel {
     private void checkGameOver() {
         int sideA = 0;
         int sideB = 0;
-        for (int i = 0; i <= 5; i++) sideA += board.getStonesInPit(i);
-        for (int i = 7; i <= 12; i++) sideB += board.getStonesInPit(i);
+        for (int i = 0; i < pitsPerSide; i++) sideA += board.getStonesInPit(i);
+        for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) sideB += board.getStonesInPit(i);
 
         if (sideA == 0 || sideB == 0) {          // Move any leftover stones on A's side into A's store.
             if (sideA > 0) {
-                for (int i = 0; i <= 5; i++) {
+                for (int i = 0; i < pitsPerSide; i++) {
                     int n = board.moveStonesOut(i);
                     for (int j = 0; j < n; j++) board.addStoneToPit(6);
                 }
             }
             if (sideB > 0) {
-                for (int i = 7; i <= 12; i++) {
+                for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) {
                     int n = board.moveStonesOut(i);
                     for (int j = 0; j < n; j++)
-                        board.addStoneToPit(13);
+                        board.addStoneToPit(pitsPerSide * 2 + 1);
                 }
             }
             gameOver = true;

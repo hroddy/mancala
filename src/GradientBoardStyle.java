@@ -23,10 +23,13 @@ import java.util.Random;
  * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
  */
 public abstract class GradientBoardStyle implements BoardStyle {
-    private static final double SIN_45 = Math.sin(Math.PI / 4);
+    private static final int RANDOM_RETRIES = 100;
+    private static final double MIN_DIST = 0.15;
+    private static final double MIN_SQUARE_DIST = MIN_DIST * MIN_DIST;
     private static final double STONE_SIZE_RATIO = 0.15;
     private static final double OUTLINE_RATIO = 0.03;
-    private static final double GAP_RATIO = 0.01;
+    private static final double BOLD_OUTLINE_RATIO = 0.05;
+    private static final double GAP_RATIO = 0.02;
     private static final float[] GRAD_RATIOS = {0f, 0.75f};
     
     private final int numHoles;
@@ -48,7 +51,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
 
     private final RoundRectangle2D[] holeShapes;
     private final RadialGradientPaint[] holePaints;
-    private BasicStroke holeStroke;
+    private BasicStroke defaultHoleStroke;
+    private BasicStroke boldHoleStroke;
     
     private final double[][] stoneX;
     private final double[][] stoneY;
@@ -106,23 +110,23 @@ public abstract class GradientBoardStyle implements BoardStyle {
     /**
      * {@inheritDoc}
      */
-    public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState) {
+    public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
         g2.setPaint(new LinearGradientPaint(0, 0, boardWidth, boardHeight, GRAD_RATIOS, boardGradientColors));
         g2.fillRect(0, 0, boardWidth, boardHeight);
-
+        
         if(lastBoardHeight != boardHeight || lastBoardWidth != boardWidth) {
             computeHoleShapes(boardWidth, boardHeight);
             computeHoleStroke();
             computeHolePaints();
-            computeStoneLocations();
             computeMasterStoneShape();
+            computeStoneLocations();
             computeStoneStroke();
             computeMasterStonePaint();
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
 
-        renderHoles(g2, gameState);
+        renderHoles(g2, gameState, isPlayerATurn, isGameOver);
     }
 
     /**
@@ -187,7 +191,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * Updates cached hole stroke.
      */
     private void computeHoleStroke() {
-        holeStroke = new BasicStroke((float)(pitDiameter * OUTLINE_RATIO));
+        defaultHoleStroke = new BasicStroke((float)(pitDiameter * OUTLINE_RATIO));
+        boldHoleStroke = new BasicStroke((float)(pitDiameter * BOLD_OUTLINE_RATIO));
     }
 
     /**
@@ -213,18 +218,25 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * For each hole, compute fixed stone locations based on hole dimensions and cached ratios
      */
     private void computeStoneLocations() {
-        double zoneOffset = pitDiameter - (pitDiameter * SIN_45);
-        double outOfZone = (2 * zoneOffset) + (pitDiameter * STONE_SIZE_RATIO);
+        double stoneDiameter = masterStoneShape.getWidth();
+        double stoneRadius = stoneDiameter / 2.0;
 
         for (int hole = 0; hole < numHoles; hole++) {
             RoundRectangle2D holeShape = holeShapes[hole];
-            
-            double holeHeight = holeShape.getHeight();
-            double holeWidth = holeShape.getWidth();
-            
+        
+            double maxHori = (holeShape.getWidth() - 2 * stoneDiameter) / 2.0;
+            double maxVert = (holeShape.getHeight() - 2 * stoneDiameter) / 2.0 - maxHori;
+
             for (int stone = 0; stone < maxStones; stone++) {
-                stoneX[hole][stone] = holeShape.getX() + zoneOffset + (holeWidth - outOfZone) * horiStoneDistRatios[hole][stone];
-                stoneY[hole][stone] = holeShape.getY() + zoneOffset + (holeHeight - outOfZone) * vertStoneDistRatios[hole][stone];
+                double xRatio = horiStoneDistRatios[hole][stone];
+                double yRatio = vertStoneDistRatios[hole][stone];
+
+                double xDisplace = xRatio * maxHori;
+                double yLimit = maxVert + Math.sqrt((maxHori * maxHori) - (xDisplace * xDisplace));
+                double yDisplace = yRatio * yLimit;
+
+                stoneX[hole][stone] = holeShape.getCenterX() + xDisplace - stoneRadius;
+                stoneY[hole][stone] = holeShape.getCenterY() + yDisplace - stoneRadius;
             }
         }
     }
@@ -270,15 +282,34 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * 
      * @param g2 graphics context used to draw the hole.
      * @param gameState array containing stone counts for all pits and stores.
+     * @param isPlayerATurn if true player A's pit outlines will be bolded, if false player B's pit outlines will be bolded.
+     * @param isGameOver if true no player's pit outlines will be bolded, if false one player's pit outlines will be bolded.
      */
-    private void renderHoles(Graphics2D g2, int[] gameState) {
+    private void renderHoles(Graphics2D g2, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
+        int storeA = numHoles / 2 - 1;
+        
         for(int hole = 0; hole < numHoles; hole++){
             RoundRectangle2D holeShape = holeShapes[hole];
             
             g2.setPaint(holePaints[hole]);
             g2.fill(holeShape);
 
-            g2.setStroke(holeStroke); 
+            if(isGameOver) {
+                g2.setStroke(defaultHoleStroke);
+            }
+            else if (hole < storeA) {
+                g2.setStroke(isPlayerATurn ? boldHoleStroke : defaultHoleStroke);
+            }
+            else if (hole == storeA) {
+                g2.setStroke(defaultHoleStroke);
+            }
+            else if (hole > storeA && hole < numHoles - 1) {
+                g2.setStroke(isPlayerATurn ? defaultHoleStroke : boldHoleStroke);
+            }
+            else {
+                g2.setStroke(defaultHoleStroke);
+            }
+            
             g2.setColor(outlineColor);              
             g2.draw(holeShape);
 
@@ -320,9 +351,33 @@ public abstract class GradientBoardStyle implements BoardStyle {
         Random random = new Random();
         for (int hole = 0; hole < numHoles; hole++) {
             for (int stone = 0; stone < maxStones; stone++) {
-                horiStoneDistRatios[hole][stone] = random.nextDouble();
-                vertStoneDistRatios[hole][stone] = random.nextDouble();
+                int tries = 0;
+                double x, y;
+                do {
+                    x = random.nextDouble() * 2 - 1;
+                    y = random.nextDouble() * 2 - 1;
+                    tries++;
+                } while(overlaps(hole, stone, x, y) && tries < RANDOM_RETRIES);
+
+                horiStoneDistRatios[hole][stone] = x;
+                vertStoneDistRatios[hole][stone] = y;
             }
         }
+    }
+
+    /**
+     * Marks stone as overlap if distance with another stone less than predefined minimum.
+     * 
+     * @return true if overlap, false if not.
+     */
+    private boolean overlaps(int hole, int stone, double x, double y){
+        for (int i = 0; i < stone; i++) {
+            double xDist = x - horiStoneDistRatios[hole][i];
+            double yDist = y - vertStoneDistRatios[hole][i];
+            if (xDist * xDist + yDist * yDist < MIN_SQUARE_DIST) {
+                return true;
+            }
+        }
+        return false;
     }
 }
