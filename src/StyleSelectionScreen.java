@@ -38,6 +38,7 @@ public class StyleSelectionScreen extends JFrame {
             e -> {
                 viewAndController.setStyle(new WoodStyle());
                 gameFrame.setVisible(true);
+                viewAndController.promptStoneCount();
                 dispose();
             }
         );
@@ -49,6 +50,7 @@ public class StyleSelectionScreen extends JFrame {
             e -> {
                 viewAndController.setStyle(new MetalStyle());
                 gameFrame.setVisible(true);
+                viewAndController.promptStoneCount();
                 dispose();
             }
         );
