@@ -10,6 +10,7 @@
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.LinearGradientPaint;
 import java.awt.Graphics2D;
 import java.awt.RadialGradientPaint;
@@ -50,6 +51,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private final RoundRectangle2D[] holeShapes = new RoundRectangle2D[NUM_HOLES];
     private final RadialGradientPaint[] holePaints = new RadialGradientPaint[NUM_HOLES];
     private BasicStroke holeStroke;
+
+    private Font labelFont;
+    private float labelAX, labelAY, labelBX, labelBY;
     
     private final double[][] stoneX = new double[NUM_HOLES][MAX_STONES];
     private final double[][] stoneY = new double[NUM_HOLES][MAX_STONES];
@@ -112,11 +116,37 @@ public abstract class GradientBoardStyle implements BoardStyle {
             setMasterStoneShape();
             setStoneStroke();
             setMasterStonePaint();
+            setLabelPositions(g2);
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
-
         drawHoles(g2, gameState);
+        drawStoreLabels(g2);
+
+    }
+
+    /**
+     * Draws MANCALA B and MANCALA A vertically inside the stores.
+     * Each letter sits in its own line with a player letter at the bottom after a blank line gap.
+     * @param g2 graphics used to draw the letters.
+     */
+
+    private void drawStoreLabels(Graphics2D g2) {
+        g2.setColor(outlineColor);
+        g2.setFont(labelFont);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int lineHeight = fm.getAscent() + fm.getDescent();
+
+        String[] mancalaLetters = {"M", "A", "N", "C", "A", "L", "A"};
+        for(int i = 0; i<mancalaLetters.length; i++) {
+            g2.drawString(mancalaLetters[i], labelBX, labelBY + i * lineHeight);
+        }
+        g2.drawString("B", labelBX, labelBY +(mancalaLetters.length + 1)* lineHeight);
+
+        for (int i =0; i < mancalaLetters.length; i++){
+            g2.drawString(mancalaLetters[i], labelAX, labelAY + i * lineHeight);
+        }
+        g2.drawString("A", labelAX, labelAY +(mancalaLetters.length + 1)* lineHeight);
     }
 
     /**
@@ -219,6 +249,29 @@ public abstract class GradientBoardStyle implements BoardStyle {
         float gradRadius = (float)(center.distance(focus) + radius);
 
         this.masterStonePaint = new RadialGradientPaint(center, gradRadius, focus, GRAD_RATIOS, stoneGradientColors, CycleMethod.NO_CYCLE);
+    }
+
+    /**
+     * Calculate where to draw the Mancala A and Mancala B labels.
+     * Label are placed inside their stores, vertically centered
+     * @param g2 graphics context needed to measure how wide and tall the letters are.
+     */
+
+    private void setLabelPositions(Graphics2D g2){
+        labelFont = new Font("Arial", Font.BOLD, (int)(pitDiameter*0.18));
+        g2.setFont(labelFont);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+
+        int lineHeight = fm.getAscent() + fm.getDescent();
+        int totalLabelHeight = 9* lineHeight;
+
+        RoundRectangle2D storeB = holeShapes[NUM_HOLES-1];
+        labelBX = (float)(storeB.getCenterX() - fm.stringWidth("M")/2.0);
+        labelBY = (float)(storeB.getCenterY() - totalLabelHeight/ 2.0 + fm.getAscent());
+
+        RoundRectangle2D storeA = holeShapes[NUM_HOLES/2 -1];
+        labelAX = (float)(storeA.getCenterX() - fm.stringWidth("M")/2.0);
+        labelAY = (float)(storeA.getCenterY() - totalLabelHeight / 2.0 + fm.getAscent());
     }
 
     /**
