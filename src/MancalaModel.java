@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MancalaModel {
-    public static final int MAX_PIT_START_STONES = 4;
-    public static final int TOTAL_PITS = 12;
+    private final int maxPitStart = 4;
+    private final int pitsPerSide = 6;
     /**
      * The underlying board holding stone counts for all 14 pits.
      */
@@ -101,6 +101,20 @@ public class MancalaModel {
      */
     public boolean isGameOver() {
         return gameOver;
+    }
+
+    /**
+     * @return max number of stones a pit can start with in mancala.
+     */
+    public int getMaxPitStart() {
+        return maxPitStart;
+    }
+
+    /**
+     * @return number of pits on each side of the mancala board.
+     */
+    public int getPitsPerSide() {
+        return pitsPerSide;
     }
 
     /**

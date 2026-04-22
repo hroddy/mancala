@@ -25,9 +25,12 @@ public class MetalStyle extends GradientBoardStyle {
     
     /**
      * Initialize gradient board with metal themed colors and specified focus.
+     * 
+     * @param maxPitStart max number of stones per pit at start of Mancala game.
+     * @param pitsPerSide number of pits for each of the pair of players.
      */
-    public MetalStyle() {
-        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, PIT_FOCUS_FACTOR);
+    public MetalStyle(int maxPitStart, int pitsPerSide) {
+        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, PIT_FOCUS_FACTOR, maxPitStart, pitsPerSide);
     }
 
     /**
