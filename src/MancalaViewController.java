@@ -17,12 +17,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import java.awt.RenderingHints;
 
 /**
  * Displays the Mancala board and routes user input to the model.
@@ -57,8 +59,10 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (style != null) {
-                    style.drawBoard(g, 0, 0, getWidth(), getHeight(), model.getBoard().getBoardCopy());
+                    style.drawBoard(g2, getWidth(), getHeight(), model.getBoard().getBoardCopy());
                 }
             }
         };
@@ -69,7 +73,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (style == null || model.isGameOver()) return;
-                int pitIndex = style.getPitAt(e.getX(), e.getY(), boardPanel.getWidth(), boardPanel.getHeight());
+                int pitIndex = style.getPitAt(e.getX(), e.getY());
                 if (pitIndex != -1) {
                     model.makeMove(pitIndex);
                 }
