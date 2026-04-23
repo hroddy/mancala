@@ -10,6 +10,7 @@
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.LinearGradientPaint;
 import java.awt.Graphics2D;
 import java.awt.RadialGradientPaint;
@@ -32,7 +33,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private static final double BOLD_OUTLINE_RATIO = 0.05;
     private static final double GAP_RATIO = 0.02;
     private static final float[] GRAD_RATIOS = {0f, 0.75f};
-    
+
     private final int numHoles;
     private final int maxStones;
     private final int numHoriGaps;
@@ -54,6 +55,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private final RadialGradientPaint[] holePaints;
     private BasicStroke defaultHoleStroke;
     private BasicStroke boldHoleStroke;
+
+    private Font labelFont;
+    private float labelAX, labelAY, labelBX, labelBY;
     
     private final double[][] stoneX;
     private final double[][] stoneY;
@@ -101,7 +105,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
 
         holeShapes = new RoundRectangle2D[numHoles];
         holePaints = new RadialGradientPaint[numHoles];
-        
+
         stoneX = new double[numHoles][maxStones];
         stoneY = new double[numHoles][maxStones];
 
@@ -114,7 +118,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
     public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
         g2.setPaint(new LinearGradientPaint(0, 0, boardWidth, boardHeight, GRAD_RATIOS, boardGradientColors));
         g2.fillRect(0, 0, boardWidth, boardHeight);
-        
+
         if(lastBoardHeight != boardHeight || lastBoardWidth != boardWidth) {
             computeHoleShapes(boardWidth, boardHeight);
             computeHoleStroke();
@@ -123,11 +127,38 @@ public abstract class GradientBoardStyle implements BoardStyle {
             computeStoneLocations();
             computeStoneStroke();
             computeMasterStonePaint();
+            computeLabelPositions(g2);
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
-
         renderHoles(g2, gameState, isPlayerATurn, isGameOver);
+        drawStoreLabels(g2);
+
+    }
+
+    /**
+     * Draws MANCALA B and MANCALA A vertically inside the stores.
+     * Each letter sits in its own line with a player letter at the bottom after a blank line gap.
+     * @param g2 graphics used to draw the letters.
+     */
+
+    private void drawStoreLabels(Graphics2D g2) {
+        g2.setColor(outlineColor);
+        g2.setFont(labelFont);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        int lineHeight = fm.getAscent() + fm.getDescent();
+
+        String[] mancalaLetters = {"M", "A", "N", "C", "A", "L", "A"};
+        for(int i = 0; i<mancalaLetters.length; i++) {
+            g2.drawString(mancalaLetters[i], labelBX, labelBY + i * lineHeight);
+        }
+        g2.drawString("B", labelBX, labelBY +(mancalaLetters.length + 1)* lineHeight);
+
+        for (int i =0; i < mancalaLetters.length; i++){
+            g2.drawString(mancalaLetters[i], labelAX, labelAY + i * lineHeight);
+        }
+        g2.drawString("A", labelAX, labelAY +(mancalaLetters.length + 1)* lineHeight);
+
     }
 
     /**
@@ -227,7 +258,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
 
         for (int hole = 0; hole < numHoles; hole++) {
             RoundRectangle2D holeShape = holeShapes[hole];
-        
+
             double maxHori = (holeShape.getWidth() - 2 * stoneDiameter) / 2.0;
             double maxVert = (holeShape.getHeight() - 2 * stoneDiameter) / 2.0 - maxHori;
 
@@ -283,6 +314,30 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
+     * Calculate where to draw the Mancala A and Mancala B labels.
+     * Label are placed inside their stores, vertically centered
+     * @param g2 graphics context needed to measure how wide and tall the letters are.
+     */
+
+    private void computeLabelPositions(Graphics2D g2){
+        labelFont = new Font("Arial", Font.BOLD, (int)(pitDiameter*0.18));
+        g2.setFont(labelFont);
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+
+        int lineHeight = fm.getAscent() + fm.getDescent();
+        int totalLabelHeight = 9* lineHeight;
+
+        RoundRectangle2D storeB = holeShapes[numHoles-1];
+        labelBX = (float)(storeB.getCenterX() - fm.stringWidth("M")/2.0);
+        labelBY = (float)(storeB.getCenterY() - totalLabelHeight/ 2.0 + fm.getAscent());
+
+        RoundRectangle2D storeA = holeShapes[numHoles/2 -1];
+        labelAX = (float)(storeA.getCenterX() - fm.stringWidth("M")/2.0);
+        labelAY = (float)(storeA.getCenterY() - totalLabelHeight / 2.0 + fm.getAscent());
+    }
+
+    /**
+     * Renders all holes with lighting effects.
      * Renders all pits and stores with gradients, outlines, and stones.
      * Also highlights the active player's side by adjusting outline thickness, improving visual feedback during gameplay.
      * 
@@ -294,7 +349,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
      */
     private void renderHoles(Graphics2D g2, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
         int storeA = numHoles / 2 - 1;
-        
+
         for(int hole = 0; hole < numHoles; hole++){
             RoundRectangle2D holeShape = holeShapes[hole];
             
@@ -316,7 +371,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
             else {
                 g2.setStroke(defaultHoleStroke);
             }
-            
+
             g2.setColor(outlineColor);              
             g2.draw(holeShape);
 
