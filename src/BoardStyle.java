@@ -22,22 +22,25 @@ public interface BoardStyle {
     Color getBoardColor();
 
     /**
-     * Paints board, including pits, stores, and stones, within the specified drawing window.
+     * Paints the board, including pits, stores, and stones, within the specified drawing window.
      * 
      * @param g2 graphics context used to draw the board.
      * @param boardWidth width of the window.
      * @param boardHeight height of the window.
      * @param gameState array containing stone counts for all pits and stores.
+     * @param isPlayerATurn whether it is currently player A or player B's turn.
+     * @param isGameOver whether the game is over or not.
      */
-    void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState);
+    void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver);
 
     /**
-     * Returns the pit index at the given coordinates, or -1 if no pit was clicked.
+     * Returns the index of the pit at the given coordinates, or -1 if no valid pit was clicked.
      * Allows the controller to map a mouse click to a pit without duplicating layout math.
+     * Stores are not considered pits.
      *
      * @param clickX x-coordinate of mouse click relative to the board panel.
      * @param clickY y-coordinate of mouse click relative to the board panel.
-     * @return pit index (0-13) if a pit was clicked, -1 otherwise.
+     * @return index corresponding to a pit in the gameState array, or -1 if none was clicked.
      */
     int getPitAt(int clickX, int clickY);
 }

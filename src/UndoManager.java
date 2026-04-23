@@ -104,6 +104,7 @@ public class UndoManager {
 
     /**
      * Resets the undo count for the current turn.
+     * Clears both the undo count and the canUndo flag so the incoming player cannot undo the outgoing player's last move.
      * Called by MancalaModel when the turn changes.
      *
      * @precondition none.
@@ -111,5 +112,6 @@ public class UndoManager {
      */
     public void resetUndoCount() {
         undoCount = 0;
+        canUndo = false;
     }
 }

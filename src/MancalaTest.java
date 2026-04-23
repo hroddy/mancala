@@ -10,7 +10,15 @@ import javax.swing.JFrame;
  * @author Nishan Bhattarai
  */
 
+/**
+ * Client class for the Mancala game model.
+ */
 public class MancalaTest {
+    /**
+     * Initializes and connects model, view and controller.
+     * 
+     * @param args command line arguments not used.
+     */
     public static void main(String[] args) {
         MancalaModel model = new MancalaModel();
         MancalaViewController viewAndController = new MancalaViewController(model);
@@ -22,7 +30,10 @@ public class MancalaTest {
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        StyleSelectionScreen setup = new StyleSelectionScreen(viewAndController, gameFrame);
+        StyleSelectionScreen setup = new StyleSelectionScreen(
+            viewAndController, gameFrame, model.getMaxPitStart(), model.getPitsPerSide()
+        );
+        
         setup.setVisible(true);
     }
 }
