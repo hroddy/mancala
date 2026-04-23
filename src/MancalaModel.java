@@ -238,6 +238,7 @@ public class MancalaModel {
         if (snapshot != null) {
             board.restoreBoard(snapshot);
             isPlayerATurn = undoManager.getSavedTurn();
+            gameOver = false;
             notifyListeners();
         }
     }
