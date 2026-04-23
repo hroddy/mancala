@@ -22,6 +22,7 @@ import java.util.Random;
 
 /**
  * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
+ * Geometry and rendering data are cached and recomputed only when the board is resized to improve performance.
  */
 public abstract class GradientBoardStyle implements BoardStyle {
     private static final int RANDOM_RETRIES = 100;
@@ -175,8 +176,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Based on current board dimensions, computes hole shapes with locations incorporated.
-     * Updates cache of hole shapes.
+     * Based on current board dimensions, computes and caches shapes and positions of all pits and stores.
+     * Avoid recomputing unless board size changes.
      * 
      * @param boardWidth total width of the board panel.
      * @param boardHeight total height of the board panel.
@@ -218,8 +219,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Based on current pit dimensions, computes the outline stroke for holes.
-     * Updates cached hole stroke.
+     * Based on current hole width, computes and caches outline strokes of holes.
+     * Avoid recomputing unless board size (and therefore hole size) changes.
      */
     private void computeHoleStroke() {
         defaultHoleStroke = new BasicStroke((float)(pitDiameter * OUTLINE_RATIO));
@@ -227,8 +228,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * For each hole, compute its paint based on its dimensions and the pit focus factor.
-     * Updates cache of hole paints.
+     * Computes and caches radial gradient paints for each hole.
+     * The gradients simulate lighting and depth, enhancing the visual realism.
+     * Avoid recomputing unless board size (and therefore paint size) changes.
      */
     private void computeHolePaints() {
         for(int hole = 0; hole < numHoles; hole++){
@@ -246,7 +248,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * For each hole, compute fixed stone locations based on hole dimensions and cached ratios
+     * Computes and caches fixed stone positions within each hole using precomputed random ratios.
+     * Creates a natural scattered appearance while ensuring stone placement remains stable across repaints.
+     * Avoid recomputing unless board size (and therefore hole dimension and location) changes.
      */
     private void computeStoneLocations() {
         double stoneDiameter = masterStoneShape.getWidth();
@@ -273,8 +277,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Based on the width of the holes, compute stone shape template.
-     * Update cached stone shape template.
+     * Computes and caches the base stone shape scaled relative to pit size.
+     * Avoids recomputing the same stone shape for every stone.
      */
     private void computeMasterStoneShape() {
         double stoneDiameter = pitDiameter * STONE_SIZE_RATIO;
@@ -282,8 +286,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Based on current stone template dimension, compute its outline stroke.
-     * Updates cached stone stroke.
+     * Computes and caches the outline stroke for stones based on their size.
+     * Avoids recomputing the same stroke for every stone.
      */
     private void computeStoneStroke() {
         double stoneDiameter = masterStoneShape.getWidth();
@@ -291,8 +295,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Based on current stone template dimension and the pit focus factor, compute its paint.
-     * Updated cached stone paint.
+     * Computes and caches the gradient paint used for all stones.
+     * The gradient simulates lighting to give stones a rounded, 3D appearance.
+     * Avoids recomputing the same paint for every stone.
      */
     private void computeMasterStonePaint() {
         double stoneDiameter = masterStoneShape.getWidth();
@@ -333,9 +338,12 @@ public abstract class GradientBoardStyle implements BoardStyle {
 
     /**
      * Renders all holes with lighting effects.
+     * Renders all pits and stores with gradients, outlines, and stones.
+     * Also highlights the active player's side by adjusting outline thickness, improving visual feedback during gameplay.
      * 
-     * @param g2 graphics context used to draw the hole.
-     * @param gameState array containing stone counts for all pits and stores.
+     * @param g2 graphics context.
+     * @param gameState array containing stone counts for all pits and stores,
+     *                  structured as defined in the BoardStyle interface.
      * @param isPlayerATurn if true player A's pit outlines will be bolded, if false player B's pit outlines will be bolded.
      * @param isGameOver if true no player's pit outlines will be bolded, if false one player's pit outlines will be bolded.
      */
@@ -375,9 +383,10 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Renders the specified number of stones with lighting effects within the specified hole.
+     * Renders stones within a specific hole using precomputed positions.
+     * Using cached positions ensures consistent layout and avoids visual jitter between player actions.
      * 
-     * @param g2 graphics context used to draw the stones.
+     * @param g2 graphics context.
      * @param stones number of stones to draw.
      * @param holeID unique ID for hole, so stone placement remains stable when the hole is resized.
      */
@@ -399,7 +408,9 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Initialize distance ratios for the x and y of all possible stones.
+     * Initializes randomized position ratios for stones within each hole.
+     * Attempts to minimize overlap while distributing stones evenly.
+     * Stores the results so placement remains consistent across resizes.
      */
     private void initStoneDistRatios() {
         Random random = new Random();
@@ -420,8 +431,13 @@ public abstract class GradientBoardStyle implements BoardStyle {
     }
 
     /**
-     * Marks stone as overlap if distance with another stone less than predefined minimum.
-     *
+     * Checks whether a candidate stone position is too close to existing stones.
+     * Used during initialization to reduce overlap and improve visual spacing.
+     * 
+     * @param hole hole of stone to check overlap.
+     * @param stone index of stone to check overlap.
+     * @param x x-coordinate of the stone location to check overlap.
+     * @param y y-coordinate of the stone location to check overlap.
      * @return true if overlap, false if not.
      */
     private boolean overlaps(int hole, int stone, double x, double y){
