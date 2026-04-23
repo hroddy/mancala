@@ -145,7 +145,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         if (model.isGameOver()) {
             undoButton.setEnabled(false);
             confirmButton.setEnabled(false);
-            JOptionPane.showMessageDialog(this, "Game Over! Winner: " + model.getWinner());
+            JOptionPane.showMessageDialog(this, "Game Over! " + model.getWinner());
         }
     }
 

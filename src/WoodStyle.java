@@ -21,6 +21,7 @@ public class WoodStyle extends GradientBoardStyle {
     private static final Color PIT_DARK  = new Color(65, 35, 20);
 
     private static final Color OUTLINE = new Color(30, 15, 5);
+    private static final Color OUTLINE_SELECTED = new Color(120, 180, 60);
     private static final double PIT_FOCUS_FACTOR = 0.2;
 
     /**
@@ -29,7 +30,7 @@ public class WoodStyle extends GradientBoardStyle {
      * @param pitsPerSide number of pits for each of the pair of players.
      */
     public WoodStyle(int maxPitStart, int pitsPerSide) {
-        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, PIT_FOCUS_FACTOR, maxPitStart, pitsPerSide);
+        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, OUTLINE_SELECTED, PIT_FOCUS_FACTOR, maxPitStart, pitsPerSide);
     }
 
     /**

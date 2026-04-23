@@ -39,6 +39,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private final int numHoriGaps;
 
     private final Color outlineColor;
+    private final Color selectedOutlineColor;
     private final double pitFocusFactor;
     private final Color[] boardGradientColors;
     private final Color[] holeGradientColors; 
@@ -74,6 +75,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
      * @param pitLight lighter color of the pit (and store) gradient.
      * @param pitDark darker color of the pit (and store) gradient.
      * @param outlineColor color of outline around the pit (and store).
+     * @param selectedOutlineColor different color for outline of current player's pits.
      * @param pitFocusFactor relative position of radial gradient focus point within a hole;
      *                       expressed as a fraction of the hole's width and height.
      * @param maxPitStart max number of stones per pit at start of Mancala game.
@@ -85,12 +87,14 @@ public abstract class GradientBoardStyle implements BoardStyle {
         Color pitLight, 
         Color pitDark, 
         Color outlineColor, 
+        Color selectedOutlineColor,
         double pitFocusFactor,
         int maxPitStart,
         int pitsPerSide
     ) { 
-        this.pitFocusFactor = pitFocusFactor;
+        this.selectedOutlineColor = selectedOutlineColor;
         this.outlineColor = outlineColor; 
+        this.pitFocusFactor = pitFocusFactor;
 
         boardGradientColors = (pitFocusFactor < 0.5) ? new Color[]{materialLight, materialDark} : new Color[]{materialDark, materialLight};
         holeGradientColors = new Color[]{pitDark, pitLight};
@@ -356,23 +360,22 @@ public abstract class GradientBoardStyle implements BoardStyle {
             g2.setPaint(holePaints[hole]);
             g2.fill(holeShape);
 
-            if(isGameOver) {
-                g2.setStroke(defaultHoleStroke);
-            }
-            else if (hole < storeA) {
-                g2.setStroke(isPlayerATurn ? boldHoleStroke : defaultHoleStroke);
-            }
-            else if (hole == storeA) {
-                g2.setStroke(defaultHoleStroke);
-            }
-            else if (hole > storeA && hole < numHoles - 1) {
-                g2.setStroke(isPlayerATurn ? defaultHoleStroke : boldHoleStroke);
-            }
-            else {
-                g2.setStroke(defaultHoleStroke);
+            BasicStroke stroke = defaultHoleStroke;
+            Color color = outlineColor;
+
+            if (!isGameOver) {
+                if (hole < storeA) {
+                    stroke = isPlayerATurn ? boldHoleStroke : defaultHoleStroke;
+                    color  = isPlayerATurn ? selectedOutlineColor : outlineColor;
+                } 
+                else if (hole > storeA && hole < numHoles - 1) {
+                    stroke = isPlayerATurn ? defaultHoleStroke : boldHoleStroke;
+                    color  = isPlayerATurn ? outlineColor : selectedOutlineColor;
+                }
             }
 
-            g2.setColor(outlineColor);              
+            g2.setStroke(stroke);
+            g2.setColor(color);
             g2.draw(holeShape);
 
             int stones = gameState[hole];

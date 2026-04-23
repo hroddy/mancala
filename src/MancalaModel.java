@@ -150,9 +150,9 @@ public class MancalaModel {
         int a = board.getStoreA();
         int b = board.getStoreB();
         if (a > b)
-            return "Player A";
+            return "Winner: Player A";
         if (b > a)
-            return "Player B";
+            return "Winner: Player B";
         return "Tie";
     }
 
