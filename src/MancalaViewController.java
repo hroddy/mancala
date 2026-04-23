@@ -80,6 +80,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (style == null || model.isGameOver()) return;
+                if (model.isPendingTurnSwitch()) return;
                 int pitIndex = style.getPitAt(e.getX(), e.getY());
                 if (pitIndex != -1) {
                     model.makeMove(pitIndex);
