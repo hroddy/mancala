@@ -20,7 +20,9 @@ public class MancalaTest {
      * @param args command line arguments not used.
      */
     public static void main(String[] args) {
-        MancalaModel model = new MancalaModel();
+        int pitsPerSide = 6;
+        int maxPitStart = 4;
+        MancalaModel model = new MancalaModel(maxPitStart, pitsPerSide);
         MancalaViewController viewAndController = new MancalaViewController(model);
         model.addListener(viewAndController);
         

@@ -1,145 +1,162 @@
 /**
  * MancalaBoard.java
  * 
- * This file holds the data structure of the board and its manipulation methods.
- * Supports moving and adding stones, and retrieving current state of pits and stores.
- * This class is part of the model in our MVC architecture.
+ * The data structure of the board and its manipulation methods.
  * 
  * @author Hannah Roddy
  * @author Johnny Tsai
  * @author Nishan Bhattarai
  */
 
+import java.util.Arrays;
+
+/**
+ * Supports moving and adding stones, and retrieving current state of pits and stores.
+ */
 public class MancalaBoard {
-    /**
-     * Holds raw int array representing the 14 pits (6 for each player and 2 for the stores).
-     */
-    private int[] pits = new int[14];
+    private int[] holes;
 
     /**
-     * Initializes all 12 pits to stonesPerPit and sets both stores to 0.
+     * Creates an array representing all holes on the board
+     * (two stores and the remaining pits).
+     * 
+     * @param numHoles size of array representing all the holes.
+     *                 - Indices 0 to (numHoles/2 - 2) represent Player A's pits.
+     *                 - Index (numHoles/2 - 1) is Player A's store.
+     *                 - Indices (numHoles/2) to (numHoles - 2) represent Player B's pits.
+     *                 - Index (numHoles - 1) is Player B's store.
+     */
+    public MancalaBoard(int numHoles){
+        holes = new int[numHoles];
+    }
+
+    /**
+     * Initializes all pits to stonesPerPit and sets both stores to 0.
      * 
      * @param stonesPerPit How many stones to put in each pit.
      */
     public void setStonesPerPit(int stonesPerPit) {
-        for (int i = 0; i < 14; i++) {
-            if (i == 6 || i == 13) pits[i] = 0;
-            else pits[i] = stonesPerPit;
+        for (int i = 0; i < holes.length; i++) {
+            holes[i] = (i == storeAIndex() || i == storeBIndex()) ? 0 : stonesPerPit;
         }
     }
 
     /**
-     * @return a copy of the 6 pit stone counts belonging to player A: 0-5.
+     * @return a copy of stone counts in each of player A's pits.
      */
     public int[] getPlayerAPits() {
-        return new int[]{pits[0], pits[1], pits[2], pits[3], pits[4], pits[5]};
+        return Arrays.copyOfRange(holes, 0, storeAIndex());
     }
 
     /**
-     * @return a copy of the 6 pit stone counts belonging to player B: 7-12.
+     * @return a copy of stone counts in each of player B's pits.
      */
     public int[] getPlayerBPits() {
-        return new int[]{pits[7], pits[8], pits[9], pits[10], pits[11], pits[12]};
+        return Arrays.copyOfRange(holes, storeAIndex() + 1, storeBIndex());
     }
 
     /**
-     * @return the stone count in Player A's mancala (index 6).
+     * @return the stone count in Player A's mancala / store.
      */
     public int getStoreA() {
-        return pits[6];
+        return holes[storeAIndex()];
     }
 
     /**
-     * @return the stone count in Player B's mancala store (index 13).
+     * @return the stone count in Player B's mancala / store.
      */
     public int getStoreB() {
-        return pits[13];
+        return holes[storeBIndex()];
     }
 
     /**
-     * Returns the number of stones in the given pit.
+     * Returns the number of stones in the given hole.
      * 
-     * @param pitIndex index of given pit.
-     * @return number of stones in given pit.
+     * @param holeIndex index of given hole.
+     * @return number of stones in given hole.
      */
-    public int getStonesInPit(int pitIndex) {
-        if (pitIndex < 0 || pitIndex >= pits.length) {
-            throw new IllegalArgumentException("Invalid pit index");
-        }
-        return pits[pitIndex];
+    public int getStonesInHole(int holeIndex) {
+        return holes[holeIndex];
     }
 
     /**
-     * Returns the index of the pit directly opposite the given pit.
-     * Pit 0 is opposite of pit 12, pit 1 is opposite of pit 11, etc.
-     * Used for capture rule. 
-     * Cannot capture stores, so calling on index 6 or 13 is invalid.
-     * 
-     * @param pitIndex index of given pit.
-     * @return index of pit directly opposite the given pit.
-     * @throws IllegalArgumentException if pit index is invalid
+     * Returns index of the pit directly opposite the given pit.
+     * The opposite pit is the mirrored position across the board.
+     * Used for the capture rule, so stores are not valid inputs.
+     *
+     * @param pitIndex index of the given pit.
+     * @return index of the pit directly opposite the given pit.
+     * @throws IllegalArgumentException if pitIndex refers to a store.
      */
-    public int getOppositeIndex(int pitIndex) {
-        if (pitIndex < 0 || pitIndex == 6 || pitIndex > pits.length - 2) {
-            throw new IllegalArgumentException("Invalid pit index");
+    public int getOppositePitIndex(int pitIndex) {
+        if (pitIndex == storeAIndex() || pitIndex == storeBIndex()) {
+            throw new IllegalArgumentException("Given index is for a store not a pit.");
         }
-        return 12 - pitIndex;
+        return storeBIndex() - 1 - pitIndex;
     }
 
     /**
-     * Returns the number of stones that used to be in given pit.
-     * Sets the stones in given pit to 0.
-     * Called when a player selects a pit to move stones from.
-     * Cannot move pits out of stores, so calling on index 6 or 13 is invalid.
+     * Removes all stones from the given pit and returns the number removed.
+     * Stores are not valid inputs.
      * 
      * @param pitIndex index of given pit.
      * @return number of stones that used to be in given pit.
-     * @throws IllegalArgumentException if pit index is invalid
+     * @throws IllegalArgumentException if pitIndex refers to a store.
      */
     public int moveStonesOut(int pitIndex) {
-        if (pitIndex < 0 || pitIndex == 6 || pitIndex > pits.length - 2) {
-            throw new IllegalArgumentException("Invalid pit index");
+        if (pitIndex == storeAIndex() || pitIndex == storeBIndex()) {
+            throw new IllegalArgumentException("Given index is for a store not a pit.");
         }
-        int numStones = getStonesInPit(pitIndex);
-        pits[pitIndex] = 0;
+        int numStones = getStonesInHole(pitIndex);
+        holes[pitIndex] = 0;
         return numStones;
     }
 
     /**
-     * As the player moves stones, we will need to add them to the pits or stores.
-     * This method adds a stone to the given pit or store.
-     * This method should be called in a for loop traversing over pits and stores on the board.
-     * 
-     * @param pitIndex index of given pit or store.
-     * @throws IllegalArgumentException if pit or store index is invalid.
+     * Increments the stone count in the specified hole by one.
+     * The hole may be either a pit or a store.
+     *
+     * @param holeIndex index of the hole to update.
      */
-    public void addStoneToPit(int pitIndex) {
-        if (pitIndex < 0 || pitIndex >= pits.length) {
-            throw new IllegalArgumentException("Invalid pit index");
-        }
-        pits[pitIndex]++;
+    public void addStoneToHole(int holeIndex) {
+        holes[holeIndex]++;
     }
 
     /**
-     * Returns a full deep copy of the pits array.
+     * Returns a copy of the board state array.
      * Used by UndoManager to save snapshots.
      * 
-     * @return full deep copy of pits array.
+     * @return a copy of the holes array.
      */ 
     public int[] getBoardCopy() {
-        return pits.clone();
+        return holes.clone();
     }
 
     /**
-     * Overwrites the pits array with a previously saved snapshot.
+     * Overwrites the holes array with a previously saved snapshot.
      * Used by UndoManager to restore state.
      * 
-     * @param snapshot Previous state of board to restore.
-     * @throws IllegalArgumentException If snapshot different size than board.
+     * @param snapshot previous board state to restore.
+     * @throws IllegalArgumentException if the snapshot has a different size than the board.
      */
     public void restoreBoard(int[] snapshot) {
-        if (snapshot.length != pits.length)
-            throw new IllegalArgumentException("Snapshot size mismatch");
-        pits = snapshot.clone();
+        if (snapshot.length != holes.length) {
+            throw new IllegalArgumentException("Snapshot size mismatch!");
+        }
+        holes = snapshot.clone();
+    }
+
+    /**
+     * @return index of player A's store in the holes array.
+     */
+    private int storeAIndex() {
+        return holes.length / 2 - 1;
+    }
+
+    /**
+     * @return index of player B's store in the holes array.
+     */
+    private int storeBIndex() {
+        return holes.length - 1;
     }
 }

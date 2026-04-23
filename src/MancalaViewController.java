@@ -72,7 +72,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 if (style != null) {
-                    style.drawBoard(g2, getWidth(), getHeight(), model.getBoard().getBoardCopy(), model.isPlayerATurn(), model.isGameOver());
+                    style.drawBoard(g2, getWidth(), getHeight(), model.getBoardCopy(), model.isPlayerATurn(), model.isGameOver());
                 }
             }
         };
@@ -174,11 +174,8 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     }
 
     /**
-     * Called by the model when the game state changes.
-     * Refreshes the turn label, repaints the board, and shows a game over dialog if the game has ended.
-     *
-     * @precondition none.
-     * @postcondition turn label reflects the current player. Board is repainted. If the game is over, a winner dialog is displayed.
+     * {@inheritDoc}
+     * Updates the turn label, repaints the board, and shows a game over dialog if the game has ended.
      */
     @Override
     public void boardChanged() {

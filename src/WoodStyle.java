@@ -37,6 +37,7 @@ public class WoodStyle extends GradientBoardStyle {
      * {@inheritDoc}
      * Blends gradient colors into a primary color using arithmetic mean to maintain the warm, earthy quality of the theme.
      */
+    @Override
     public Color getBoardColor() {
         return new Color(
             (MATERIAL_LIGHT.getRed() + MATERIAL_DARK.getRed()) / 2,

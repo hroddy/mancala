@@ -1,8 +1,8 @@
 /**
  * MancalaModel.java
  *
- * Model containing game logic and state of the Mancala game.
- *
+ * Represents the model in the MVC architecture for a Mancala game.
+ * 
  * @author Hannah Roddy
  * @author Johnny Tsai
  * @author Nishan Bhattarai
@@ -10,80 +10,56 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Maintains game state, enforces rules, and coordinates turn flow.
+ */
 public class MancalaModel {
-    private final int maxPitStart = 4;
-    private final int pitsPerSide = 6;
-    /**
-     * The underlying board holding stone counts for all 14 pits.
-     */
-    private MancalaBoard board;
-    /**
-     * List of views that want to be notified when the board changes.
-     */
-    private List<MancalaListener> listeners;
-    /**
-     * It is true if it is currently Player A's turn, false if it is Player B's turn.
-     */
-    private boolean isPlayerATurn;
-    /**
-     * True once game has ended and no more moves will be proceed furthur.
-     */
-    private boolean gameOver;
-    /**
-     * Handles the saving and restoring board snapshots for the undo feature
-     */
-    private UndoManager undoManager;
+    private final int maxPitStart;
+    private final int pitsPerSide;
+    
+    private final MancalaBoard board; // The underlying board holding stone counts for all holes.
+    private final List<MancalaListener> listeners; // List of views that want to be notified when the board changes.
+    private final UndoManager undoManager; // Handles the saving and restoring board snapshots for the undo feature.
+    
+    private boolean isPlayerATurn; // True if it is currently Player A's turn, false if it is Player B's turn.
+    private boolean gameOver; // True once game has ended and no more moves will be proceed furthur.
+    private boolean pendingTurnSwitch; // True when current player made a move that would switch turn but has not yet confirmed it, false otherwise.
 
     /**
-     * True when the current player has made a move that would switch the turn,
-     * but has not yet confirmed it. False during free turns (landing in own store)
-     * and before any move has been made this turn.
+     * Constructs a new MancalaModel with an empty board.
+     * Player A will start the game by default.
      */
-    private boolean pendingTurnSwitch;
-
-    /**
-     * Construct a new MancalaModel with an empty board
-     * Player A will start the game by default and since it a start the game is not over.
-     */
-    public MancalaModel() {
-        board = new MancalaBoard();
+    public MancalaModel(int maxPitStart, int pitsPerSide) {
+        this.maxPitStart = maxPitStart;
+        this.pitsPerSide = pitsPerSide;
+        
+        int numHoles = pitsPerSide * 2 + 2;
+        board = new MancalaBoard(numHoles);
         listeners = new ArrayList<>();
-        isPlayerATurn = true;
-        gameOver = false;
         undoManager = new UndoManager();
 
+        isPlayerATurn = true;
+        gameOver = false;
     }
 
     /**
-     * It will register the listeners that will be notified whenever the board changes
+     * Adds a listener that will be notified whenever the board changes.
      *
-     * @param listener the lister to add
+     * @param listener the listener to add.
      */
-
     public void addListener(MancalaListener listener) {
         listeners.add(listener);
     }
 
     /**
-     * It will notify all the listeners that the board state has changed.
-     * I will call internally after every move, undo or game setup
-     */
-    private void notifyListeners() {
-        // loop through every registered listener and call its callback
-        for (MancalaListener listener : listeners) {
-            listener.boardChanged();
-        }
-    }
-
-    /**
-     * Initializes all 12 pits with the given number of stones and leave the both stores on the side empty
-     * Player will agree on this number before the game starts it will be either 3 or 4.
+     * Initializes all pits with the specified number of stones and leave the stores empty.
+     * Players choose this number before the game starts.
      *
      * @param stonesPerPit the number of stones to place in each pit
      */
     public void setUpBoard(int stonesPerPit) {
         board.setStonesPerPit(stonesPerPit);
-        isPlayerATurn = true;    // new game it will reset turn state and notify the view to repaint
+        isPlayerATurn = true;
         gameOver = false;
         pendingTurnSwitch = false;
         undoManager.reset();
@@ -91,28 +67,28 @@ public class MancalaModel {
     }
 
     /**
-     * @return the MancalaBoard so views can read pit and store counts
+     * @return a copy of the current board state.
      */
-    public MancalaBoard getBoard() {
-        return board;
+    public int[] getBoardCopy() {
+        return board.getBoardCopy();
     }
 
     /**
-     * @return true if its Player A's turn
+     * @return true if it's Player A's turn, false if it's Player B's turn.
      */
     public boolean isPlayerATurn() {
         return isPlayerATurn;
     }
 
     /**
-     * @return true if the game is ended
+     * @return true if the game has ended, false if the game is still ongoing.
      */
     public boolean isGameOver() {
         return gameOver;
     }
 
     /**
-     * @return max number of stones a pit can start with in mancala.
+     * @return maximum number of stones a pit can start with in Mancala.
      */
     public int getMaxPitStart() {
         return maxPitStart;
@@ -126,8 +102,7 @@ public class MancalaModel {
     }
 
     /**
-     * @return true if the current player has made a move that is waiting to be confirmed before the turn advances to the other player.
-     * False during free turns and before any move this turn.
+     * @return true if current player made a move that must be confirmed before turn switches; false otherwise.
      */
     public boolean isPendingTurnSwitch() {
         return pendingTurnSwitch;
@@ -175,7 +150,7 @@ public class MancalaModel {
             return;
         if (!isPlayerATurn && pitIndex < pitsPerSide)
             return;
-        if (board.getStonesInPit(pitIndex) == 0)
+        if (board.getStonesInHole(pitIndex) == 0)
             return;
 
         undoManager.saveState(board.getBoardCopy(), isPlayerATurn);
@@ -189,7 +164,7 @@ public class MancalaModel {
                 continue;
             if (!isPlayerATurn && currentIndex == pitsPerSide)
                 continue;
-            board.addStoneToPit(currentIndex);
+            board.addStoneToHole(currentIndex);
             stones--;
         }
 
@@ -200,15 +175,15 @@ public class MancalaModel {
         boolean landedOnOwnSide = (isPlayerATurn && currentIndex >= 0 && currentIndex < pitsPerSide) ||
                                 (!isPlayerATurn && currentIndex > pitsPerSide && currentIndex <= totalPits);
 
-        if (landedOnOwnSide && board.getStonesInPit(currentIndex) == 1) {
-            int oppositeIndex = board.getOppositeIndex(currentIndex);
-            int oppositeStones = board.getStonesInPit(oppositeIndex);
+        if (landedOnOwnSide && board.getStonesInHole(currentIndex) == 1) {
+            int oppositeIndex = board.getOppositePitIndex(currentIndex);
+            int oppositeStones = board.getStonesInHole(oppositeIndex);
             if (oppositeStones > 0) {
                 board.moveStonesOut(currentIndex);   // take the landing stone
                 board.moveStonesOut(oppositeIndex);  // take all opposite stones
                 int store = isPlayerATurn ? pitsPerSide : totalPits + 1;
                 for (int i = 0; i < oppositeStones + 1; i++) {
-                    board.addStoneToPit(store);
+                    board.addStoneToHole(store);
                 }
             }
         }
@@ -244,21 +219,21 @@ public class MancalaModel {
     private void checkGameOver() {
         int sideA = 0;
         int sideB = 0;
-        for (int i = 0; i < pitsPerSide; i++) sideA += board.getStonesInPit(i);
-        for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) sideB += board.getStonesInPit(i);
+        for (int i = 0; i < pitsPerSide; i++) sideA += board.getStonesInHole(i);
+        for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) sideB += board.getStonesInHole(i);
 
         if (sideA == 0 || sideB == 0) {          // Move any leftover stones on A's side into A's store.
             if (sideA > 0) {
                 for (int i = 0; i < pitsPerSide; i++) {
                     int n = board.moveStonesOut(i);
-                    for (int j = 0; j < n; j++) board.addStoneToPit(6);
+                    for (int j = 0; j < n; j++) board.addStoneToHole(6);
                 }
             }
             if (sideB > 0) {
                 for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) {
                     int n = board.moveStonesOut(i);
                     for (int j = 0; j < n; j++)
-                        board.addStoneToPit(pitsPerSide * 2 + 1);
+                        board.addStoneToHole(pitsPerSide * 2 + 1);
                 }
             }
             gameOver = true;
@@ -279,6 +254,16 @@ public class MancalaModel {
             gameOver = false;
             pendingTurnSwitch = false;
             notifyListeners();
+        }
+    }
+
+    /**
+     * Notifies all added listeners that the board state has changed.
+     * Changes include player move, undo operations, and game setup.
+     */
+    private void notifyListeners() {
+        for (MancalaListener listener : listeners) {
+            listener.boardChanged();
         }
     }
 }

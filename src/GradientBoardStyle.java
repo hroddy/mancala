@@ -115,6 +115,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver) {
         g2.setPaint(new LinearGradientPaint(0, 0, boardWidth, boardHeight, GRAD_RATIOS, boardGradientColors));
         g2.fillRect(0, 0, boardWidth, boardHeight);
@@ -130,14 +131,14 @@ public abstract class GradientBoardStyle implements BoardStyle {
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
+        
         renderHoles(g2, gameState, isPlayerATurn, isGameOver);
-
     }
-
 
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getPitAt(int clickX, int clickY) {
         for (int i = 0; i < numHoles; i++) {
             if (holeShapes[i].contains(clickX, clickY)) {

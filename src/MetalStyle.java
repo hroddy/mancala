@@ -38,6 +38,7 @@ public class MetalStyle extends GradientBoardStyle {
      * {@inheritDoc}
      * Blends gradient colors into a primary color using root-mean-square to maintain the luminous quality of the theme.
      */
+    @Override
     public Color getBoardColor() {
         int r = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2);
         int g = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2);
