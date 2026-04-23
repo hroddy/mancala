@@ -50,9 +50,10 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private int lastBoardHeight;
     private double pitDiameter;
 
-    private final RoundRectangle2D[] holeShapes = new RoundRectangle2D[NUM_HOLES];
-    private final RadialGradientPaint[] holePaints = new RadialGradientPaint[NUM_HOLES];
-    private BasicStroke holeStroke;
+    private final RoundRectangle2D[] holeShapes;
+    private final RadialGradientPaint[] holePaints;
+    private BasicStroke defaultHoleStroke;
+    private BasicStroke boldHoleStroke;
 
     private Font labelFont;
     private float labelAX, labelAY, labelBX, labelBY;
@@ -129,7 +130,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
             this.lastBoardWidth = boardWidth;
             this.lastBoardHeight = boardHeight;
         }
-        drawHoles(g2, gameState);
+        renderHoles(g2, gameState, isPlayerATurn, isGameOver);
         drawStoreLabels(g2);
 
     }
@@ -157,7 +158,6 @@ public abstract class GradientBoardStyle implements BoardStyle {
         }
         g2.drawString("A", labelAX, labelAY +(mancalaLetters.length + 1)* lineHeight);
 
-        renderHoles(g2, gameState, isPlayerATurn, isGameOver);
     }
 
     /**
@@ -322,11 +322,11 @@ public abstract class GradientBoardStyle implements BoardStyle {
         int lineHeight = fm.getAscent() + fm.getDescent();
         int totalLabelHeight = 9* lineHeight;
 
-        RoundRectangle2D storeB = holeShapes[NUM_HOLES-1];
+        RoundRectangle2D storeB = holeShapes[numHoles-1];
         labelBX = (float)(storeB.getCenterX() - fm.stringWidth("M")/2.0);
         labelBY = (float)(storeB.getCenterY() - totalLabelHeight/ 2.0 + fm.getAscent());
 
-        RoundRectangle2D storeA = holeShapes[NUM_HOLES/2 -1];
+        RoundRectangle2D storeA = holeShapes[numHoles/2 -1];
         labelAX = (float)(storeA.getCenterX() - fm.stringWidth("M")/2.0);
         labelAY = (float)(storeA.getCenterY() - totalLabelHeight / 2.0 + fm.getAscent());
     }
