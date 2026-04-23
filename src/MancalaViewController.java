@@ -21,10 +21,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 /**
  * Displays the Mancala board and routes user input to the model.
@@ -49,6 +46,12 @@ public class MancalaViewController extends JPanel implements MancalaListener {
      * Automatically invoked when the current player exhausts their undo allowance.
      */
     private JButton confirmButton;
+    private  JPanel boardWithLabels;
+
+    /**Side panel containing the vertical MANCALA B label. */
+    private JPanel leftLabelPanel;
+    /**Side panel containing the vertical MANCALA A label. */
+    private JPanel rightLabelPanel;
 
     /**
      * Constructs the view/controller, wires up the undo button, turn label,
@@ -88,7 +91,14 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             }
         });
 
-        add(boardPanel, BorderLayout.CENTER);
+        boardWithLabels = new JPanel(new BorderLayout());
+        leftLabelPanel = createMancalaLabel("B");
+        rightLabelPanel = createMancalaLabel("A");
+        boardWithLabels.add(leftLabelPanel, BorderLayout.WEST);
+        boardWithLabels.add(boardPanel, BorderLayout.CENTER);
+        boardWithLabels.add(rightLabelPanel,BorderLayout.EAST);
+        add(boardWithLabels, BorderLayout.CENTER);
+
 
         JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
 
@@ -111,14 +121,56 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     }
 
     /**
-     * Sets the visual style strategy used to paint the board.
+     * Creates a vertical label panel for the two stores
+     * Letters of the word MANCALA are stacked from top to bottom and a small gap and a player's letter A and B respectively.
+     * @param playerLetter A or B the letters shown at the bottom of the each label
+     * @return a JPanel containing the vertically stacked and centered label
+     */
+    private JPanel createMancalaLabel(String playerLetter) {
+        JPanel labelPanel = new JPanel();
+        labelPanel.setLayout(new javax.swing.BoxLayout(labelPanel, javax.swing.BoxLayout.Y_AXIS));
+        labelPanel.setOpaque(true);
+
+        Font font = new Font("Arial", Font.BOLD, 18);
+        labelPanel.add(javax.swing.Box.createVerticalGlue());
+
+        String[]mancalaLetters = {"M", "A", "N", "C", "A", "L", "A"};
+        for(String letter : mancalaLetters){
+            JLabel jL = new JLabel(letter);
+            jL.setFont(font);
+            jL.setForeground(Color.black);
+            jL.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+            labelPanel.add(jL);
+        }
+        labelPanel.add(javax.swing.Box.createVerticalStrut(15));
+        JLabel playerLabel = new JLabel(playerLetter);
+        playerLabel.setFont(font);
+        playerLabel.setForeground(Color.BLACK);
+        playerLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        labelPanel.add(playerLabel);
+
+        labelPanel.add(javax.swing.Box.createVerticalGlue());
+        labelPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 15, 20, 15));
+
+        return labelPanel;
+    }
+
+    /**
+     * Sets the visual style strategy used to paint the board and updates the label panel background
+     * to match the board color so that MANCALA labels visually blend with the board
      *
      * @param style the BoardStyle implementation to use.
      * @precondition style is not null.
      * @postcondition all subsequent paintComponent calls will use the given style.
      */
     public void setStyle(BoardStyle style){
+
         this.style = style;
+        Color boardColor = style.getBoardColor();
+        boardWithLabels.setBackground(boardColor);
+        leftLabelPanel.setBackground(boardColor);
+        rightLabelPanel.setBackground(boardColor);
+        repaint();
     }
 
     /**
