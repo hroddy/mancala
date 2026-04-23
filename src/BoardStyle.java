@@ -28,8 +28,13 @@ public interface BoardStyle {
      * @param boardWidth width of the window.
      * @param boardHeight height of the window.
      * @param gameState array containing stone counts for all pits and stores.
-     * @param isPlayerATurn whether it is currently player A or player B's turn.
-     * @param isGameOver whether the game is over or not.
+     *                  Let n be length of gameState, representing the number of holes total. 
+     *                  - Indices 0 to (n/2 - 2) represent Player A's pits.
+     *                  - Index (n/2 - 1) is Player A's store.
+     *                  - Indices (n/2) to (n - 2) represent Player B's pits.
+     *                  - Index (n - 1) is Player B's store.
+     * @param isPlayerATurn true if it is player A's turn; false if it is player B's turn
+     * @param isGameOver true if the game has ended; false otherwise.
      */
     void drawBoard(Graphics2D g2, int boardWidth, int boardHeight, int[] gameState, boolean isPlayerATurn, boolean isGameOver);
 
