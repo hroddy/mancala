@@ -18,13 +18,13 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import java.awt.RenderingHints;
 
 /**
  * Displays the Mancala board and routes user input to the model.
@@ -42,6 +42,13 @@ public class MancalaViewController extends JPanel implements MancalaListener {
 
     /** Allows the current player to undo their last move. */
     private JButton undoButton;
+
+    /**
+     * Commits the current player's move and advances the turn to the other player.
+     * Enabled only when a move is pending confirmation.
+     * Automatically invoked when the current player exhausts their undo allowance.
+     */
+    private JButton confirmButton;
 
     /**
      * Constructs the view/controller, wires up the undo button, turn label,
@@ -91,8 +98,14 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         undoButton.setPreferredSize(new Dimension(100, 35));
         undoButton.addActionListener(e -> model.undo());
 
+        confirmButton = new JButton("Confirm Move");
+        confirmButton.setPreferredSize(new Dimension(130, 35));
+        confirmButton.setEnabled(false);
+        confirmButton.addActionListener(e -> model.confirmMove());
+
         controlBar.add(turnLabel);
         controlBar.add(undoButton);
+        controlBar.add(confirmButton);
         add(controlBar, BorderLayout.SOUTH);
     }
 
@@ -116,9 +129,21 @@ public class MancalaViewController extends JPanel implements MancalaListener {
      */
     @Override
     public void boardChanged() {
+        if (model.isPendingTurnSwitch() && !model.canUndo()) {
+            model.confirmMove();
+            return;
+        }
+ 
+        boolean pending = model.isPendingTurnSwitch();
+        undoButton.setEnabled(model.canUndo());
+        confirmButton.setEnabled(pending);
+        
         turnLabel.setText(model.isPlayerATurn() ? "Player A's Turn" : "Player B's Turn");
         repaint();
+
         if (model.isGameOver()) {
+            undoButton.setEnabled(false);
+            confirmButton.setEnabled(false);
             JOptionPane.showMessageDialog(this, "Game Over! Winner: " + model.getWinner());
         }
     }

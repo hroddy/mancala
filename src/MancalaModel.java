@@ -35,6 +35,13 @@ public class MancalaModel {
     private UndoManager undoManager;
 
     /**
+     * True when the current player has made a move that would switch the turn,
+     * but has not yet confirmed it. False during free turns (landing in own store)
+     * and before any move has been made this turn.
+     */
+    private boolean pendingTurnSwitch;
+
+    /**
      * Construct a new MancalaModel with an empty board
      * Player A will start the game by default and since it a start the game is not over.
      */
@@ -78,6 +85,7 @@ public class MancalaModel {
         board.setStonesPerPit(stonesPerPit);
         isPlayerATurn = true;    // new game it will reset turn state and notify the view to repaint
         gameOver = false;
+        pendingTurnSwitch = false;
         undoManager.reset();
         notifyListeners();
     }
@@ -118,6 +126,21 @@ public class MancalaModel {
     }
 
     /**
+     * @return true if the current player has made a move that is waiting to be confirmed before the turn advances to the other player.
+     * False during free turns and before any move this turn.
+     */
+    public boolean isPendingTurnSwitch() {
+        return pendingTurnSwitch;
+    }
+ 
+    /**
+     * @return true if the current player is allowed to undo their last move.
+     */
+    public boolean canUndo() {
+        return undoManager.canUndo();
+    }
+
+    /**
      * It will return the winner of the game or a tie message once the game is over.
      * It will only be call after the isGameOver() returns true
      *
@@ -135,16 +158,17 @@ public class MancalaModel {
 
     /**
      * Makes a move from the pit the player clicked on.
-     * It picks up all the stones from that pit and drops them one by one going counterclockwise around the board.
-     * Skip the other player's store when dropping the stones.
-     * If your last stone lands in your own store you will go again.
-     * The board is saved before the move so that the player can undo it.
+     * Stones are picked up and distributed counterclockwise, skipping the opponent's store.
+     * If the last stone lands in the current player's own store, they get a free turn
+     * (no confirmation required — they may move again immediately).
+     * Otherwise, pendingTurnSwitch is set to true and the player must confirm before the turn advances.
      *
      * @param pitIndex which pit to move from
      */
     public void makeMove(int pitIndex) {
         int totalPits = pitsPerSide * 2;
         if (gameOver) return;
+        if (pendingTurnSwitch) return;  // must confirm or undo before moving again
         if (pitIndex < 0 || pitIndex > totalPits || pitIndex == pitsPerSide)
             return;
         if (isPlayerATurn && pitIndex > pitsPerSide)
@@ -189,12 +213,26 @@ public class MancalaModel {
             }
         }
 
-        if (!landedInOwnStore) {
-            isPlayerATurn = !isPlayerATurn;
-            undoManager.resetUndoCount(); // new turn, fresh undo count
+        if (landedInOwnStore) {
+            pendingTurnSwitch = false;
+        } else {
+            pendingTurnSwitch = true;
         }
 
         checkGameOver();
+        notifyListeners();
+    }
+
+    /**
+     * Confirms the current player's move and advances the turn to the other player.
+     * Has no effect if there is no pending turn switch (e.g. during a free turn or
+     * before any move has been made).
+     */
+    public void confirmMove() {
+        if (!pendingTurnSwitch) return;
+        isPlayerATurn = !isPlayerATurn;
+        pendingTurnSwitch = false;
+        undoManager.resetUndoCount();
         notifyListeners();
     }
 
@@ -239,6 +277,7 @@ public class MancalaModel {
             board.restoreBoard(snapshot);
             isPlayerATurn = undoManager.getSavedTurn();
             gameOver = false;
+            pendingTurnSwitch = false;
             notifyListeners();
         }
     }
