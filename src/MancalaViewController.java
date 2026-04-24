@@ -10,7 +10,6 @@
  * @author Nishan Bhattarai
  */
 
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -21,50 +20,47 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.BorderFactory;
 
 /**
  * Displays the Mancala board and routes user input to the model.
  * Implements MancalaListener to repaint whenever the model's state changes.
  */
 public class MancalaViewController extends JPanel implements MancalaListener {
-    /** The game model this controller reads from and writes to. */
-    private MancalaModel model;
+    private static final Font TEXT_FONT = new Font("Arial", Font.BOLD, 20);
+    private static final Dimension BUTTON_SIZE = new Dimension(130, 35);
 
-    /** The pluggable style strategy used to draw the board. */
-    private BoardStyle style;
-
-    /** Displays whose turn it currently is. */
-    private JLabel turnLabel;
-
-    /** Allows the current player to undo their last move. */
-    private JButton undoButton;
-
-    /**
+    private MancalaModel model; // The game model this controller reads from and writes to.
+    private BoardStyle style; // The pluggable style strategy used to draw the board.
+    
+    /*
      * Commits the current player's move and advances the turn to the other player.
      * Enabled only when a move is pending confirmation.
      * Automatically invoked when the current player exhausts their undo allowance.
      */
-    private JButton confirmButton;
-    private  JPanel boardWithLabels;
-
-    /**Side panel containing the vertical MANCALA B label. */
-    private JPanel leftLabelPanel;
-    /**Side panel containing the vertical MANCALA A label. */
-    private JPanel rightLabelPanel;
+    private JButton confirmButton; 
+    private JButton undoButton; // Allows the current player to undo their last move.
+    private JLabel turnLabel; // Displays whose turn it currently is.
+    
+    private final JPanel boardWithLabels;
+    private final JLabel storeALabel;
+    private final JLabel storeBLabel;
 
     /**
-     * Constructs the view/controller, wires up the undo button, turn label,
-     * and mouse listener.
+     * Constructs the view/controller and initializes UI components,
+     * including the board panel, controls, and event listeners.
      *
-     * @param model the MancalaModel driving the game logic.
-     * @precondition model is not null.
-     * @postcondition a board panel, turn label, and undo button are initialized and laid out. Style is null until setStyle() is called.
+     * @param model the MancalaModel driving the game logic; cannot be null.
      */
     public MancalaViewController(MancalaModel model) {
         this.model = model;
         setLayout(new BorderLayout());
 
+        // Delegate drawing of the board to the BoardStyle.
         JPanel boardPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -76,7 +72,6 @@ public class MancalaViewController extends JPanel implements MancalaListener {
                 }
             }
         };
-        boardPanel.setBackground(Color.DARK_GRAY);
 
         // Map a mouse click to a pit index and forward it to the model.
         boardPanel.addMouseListener(new MouseAdapter() {
@@ -91,91 +86,62 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             }
         });
 
-        boardWithLabels = new JPanel(new BorderLayout());
-        leftLabelPanel = createMancalaLabel("B");
-        rightLabelPanel = createMancalaLabel("A");
-        boardWithLabels.add(leftLabelPanel, BorderLayout.WEST);
-        boardWithLabels.add(boardPanel, BorderLayout.CENTER);
-        boardWithLabels.add(rightLabelPanel,BorderLayout.EAST);
-        add(boardWithLabels, BorderLayout.CENTER);
+        storeALabel = createLabel();
+        storeALabel.setText("<html>M<br>A<br>N<br>C<br>A<br>L<br>A<br><br>A</html>");
 
+        storeBLabel = createLabel();
+        storeBLabel.setText("<html>M<br>A<br>N<br>C<br>A<br>L<br>A<br><br>B</html>");
+
+        
+        boardWithLabels = new JPanel(new BorderLayout());
+        boardWithLabels.add(boardPanel, BorderLayout.CENTER);
+        boardWithLabels.add(storeALabel,BorderLayout.EAST);
+        boardWithLabels.add(storeBLabel, BorderLayout.WEST);
 
         JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
 
         turnLabel = new JLabel("Player A's Turn");
-        turnLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        turnLabel.setFont(TEXT_FONT);
 
         undoButton = new JButton("Undo");
-        undoButton.setPreferredSize(new Dimension(100, 35));
+        undoButton.setPreferredSize(BUTTON_SIZE);
         undoButton.addActionListener(e -> model.undo());
 
         confirmButton = new JButton("Confirm Move");
-        confirmButton.setPreferredSize(new Dimension(130, 35));
+        confirmButton.setPreferredSize(BUTTON_SIZE);
         confirmButton.setEnabled(false);
         confirmButton.addActionListener(e -> model.confirmMove());
 
         controlBar.add(turnLabel);
         controlBar.add(undoButton);
         controlBar.add(confirmButton);
+        
+        add(boardWithLabels, BorderLayout.CENTER);
         add(controlBar, BorderLayout.SOUTH);
     }
 
     /**
-     * Creates a vertical label panel for the two stores
-     * Letters of the word MANCALA are stacked from top to bottom and a small gap and a player's letter A and B respectively.
-     * @param playerLetter A or B the letters shown at the bottom of the each label
-     * @return a JPanel containing the vertically stacked and centered label
-     */
-    private JPanel createMancalaLabel(String playerLetter) {
-        JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new javax.swing.BoxLayout(labelPanel, javax.swing.BoxLayout.Y_AXIS));
-        labelPanel.setOpaque(true);
-
-        Font font = new Font("Arial", Font.BOLD, 18);
-        labelPanel.add(javax.swing.Box.createVerticalGlue());
-
-        String[]mancalaLetters = {"M", "A", "N", "C", "A", "L", "A"};
-        for(String letter : mancalaLetters){
-            JLabel jL = new JLabel(letter);
-            jL.setFont(font);
-            jL.setForeground(Color.black);
-            jL.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-            labelPanel.add(jL);
-        }
-        labelPanel.add(javax.swing.Box.createVerticalStrut(15));
-        JLabel playerLabel = new JLabel(playerLetter);
-        playerLabel.setFont(font);
-        playerLabel.setForeground(Color.BLACK);
-        playerLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        labelPanel.add(playerLabel);
-
-        labelPanel.add(javax.swing.Box.createVerticalGlue());
-        labelPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(20, 15, 20, 15));
-
-        return labelPanel;
-    }
-
-    /**
-     * Sets the visual style strategy used to paint the board and updates the label panel background
-     * to match the board color so that MANCALA labels visually blend with the board
+     * Sets the board style strategy used to paint the board
+     * Updates the label panel colors to match with the style colors.
      *
-     * @param style the BoardStyle implementation to use.
-     * @precondition style is not null.
-     * @postcondition all subsequent paintComponent calls will use the given style.
+     * @param style the BoardStyle implementation to use; cannot be null
      */
     public void setStyle(BoardStyle style){
-
         this.style = style;
+        
         Color boardColor = style.getBoardColor();
         boardWithLabels.setBackground(boardColor);
-        leftLabelPanel.setBackground(boardColor);
-        rightLabelPanel.setBackground(boardColor);
+        storeALabel.setForeground(style.getBoardContrastColor());
+        storeBLabel.setForeground(style.getBoardContrastColor());
+
         repaint();
     }
 
     /**
      * {@inheritDoc}
-     * Updates the turn label, repaints the board, and shows a game over dialog if the game has ended.
+     * Updates UI components to reflect the current game state,
+     * including the turn label, control buttons, and board display.
+     * Displays a dialog if the game has ended.
      */
     @Override
     public void boardChanged() {
@@ -198,27 +164,11 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         }
     }
 
-    /**
-     * Prompts players to select a starting stone count of 3 or 4.
-     * Called once after the game frame becomes visible and a style has been selected.
-     * Initializes the board via the model using the chosen count.
-     *
-     * @precondition setStyle() has been called and the game frame is visible.
-     * @postcondition the model's board is initialized with the chosen number of stones per pit. Defaults to 3 if the dialog is closed without a selection.
-     */
-    public void promptStoneCount() {
-        String[] options = {"3", "4"};
-        int choice = JOptionPane.showOptionDialog(
-            this,
-            "How many stones per pit?",
-            "Game Setup",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-        int stonesPerPit = (choice == 1) ? 4 : 3;
-        model.setUpBoard(stonesPerPit);
+    private JLabel createLabel() {
+        JLabel label = new JLabel();
+        label.setOpaque(false);
+        label.setFont(TEXT_FONT);
+        label.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        return label;
     }
 }

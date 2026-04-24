@@ -3,7 +3,7 @@ import javax.swing.JFrame;
 /**
  * MancalaTest.java
  * 
- * Main entry point for mancala game app.
+ * Main entry point for the Mancala game application.
  * 
  * @author Hannah Roddy
  * @author Johnny Tsai
@@ -11,13 +11,13 @@ import javax.swing.JFrame;
  */
 
 /**
- * Client class for the Mancala game model.
+ * Creates and initializes the Mancala application.
  */
 public class MancalaTest {
     /**
-     * Initializes and connects model, view and controller.
+     * Launches the Mancala game and connects the model, view/controller, and setup screen.
      * 
-     * @param args command line arguments not used.
+     * @param args unused command line arguments.
      */
     public static void main(String[] args) {
         int pitsPerSide = 6;
@@ -32,8 +32,8 @@ public class MancalaTest {
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        StyleSelectionScreen setup = new StyleSelectionScreen(
-            viewAndController, gameFrame, model.getMaxPitStart(), model.getPitsPerSide()
+        ConfigurationScreen setup = new ConfigurationScreen(
+            viewAndController, model, gameFrame, model.getMaxPitStart(), model.getPitsPerSide()
         );
         
         setup.setVisible(true);

@@ -22,6 +22,11 @@ public interface BoardStyle {
     Color getBoardColor();
 
     /**
+     * @return the board's contrast color.
+     */
+    Color getBoardContrastColor();
+
+    /**
      * Paints the board, including pits, stores, and stones, within the specified drawing window.
      * 
      * @param g2 graphics context used to draw the board.

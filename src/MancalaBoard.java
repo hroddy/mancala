@@ -8,8 +8,6 @@
  * @author Nishan Bhattarai
  */
 
-import java.util.Arrays;
-
 /**
  * Supports moving and adding stones, and retrieving current state of pits and stores.
  */
@@ -40,19 +38,21 @@ public class MancalaBoard {
             holes[i] = (i == storeAIndex() || i == storeBIndex()) ? 0 : stonesPerPit;
         }
     }
-
-    /**
-     * @return a copy of stone counts in each of player A's pits.
-     */
-    public int[] getPlayerAPits() {
-        return Arrays.copyOfRange(holes, 0, storeAIndex());
+    
+    public int getPlayerAPitStoneCount() {
+        int total = 0;
+        for (int i = 0; i < storeAIndex(); i++) {
+            total += holes[i];
+        }
+        return total;
     }
 
-    /**
-     * @return a copy of stone counts in each of player B's pits.
-     */
-    public int[] getPlayerBPits() {
-        return Arrays.copyOfRange(holes, storeAIndex() + 1, storeBIndex());
+    public int getPlayerBPitStoneCount() {
+        int total = 0;
+        for (int i = storeAIndex() + 1; i < storeBIndex(); i++) {
+            total += holes[i];
+        }
+        return total;
     }
 
     /**
@@ -120,6 +120,10 @@ public class MancalaBoard {
      */
     public void addStoneToHole(int holeIndex) {
         holes[holeIndex]++;
+    }
+
+    public void addStonesToHole(int holeIndex, int count) {
+        holes[holeIndex] += count;
     }
 
     /**

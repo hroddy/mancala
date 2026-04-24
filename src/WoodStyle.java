@@ -24,6 +24,13 @@ public class WoodStyle extends GradientBoardStyle {
     private static final Color OUTLINE_SELECTED = new Color(120, 180, 60);
     private static final double PIT_FOCUS_FACTOR = 0.2;
 
+    private static final Color CONTRAST_COLOR = new Color(255,215,0);
+    private static final Color PRIMARY_COLOR = new Color(
+        (MATERIAL_LIGHT.getRed() + MATERIAL_DARK.getRed()) / 2,
+        (MATERIAL_LIGHT.getGreen() + MATERIAL_DARK.getGreen()) / 2,
+        (MATERIAL_LIGHT.getBlue() + MATERIAL_DARK.getBlue()) / 2
+    );
+
     /**
      * Initialize gradient board with wood themed colors and specified focus.
      * @param maxPitStart max number of stones per pit at start of Mancala game.
@@ -39,10 +46,14 @@ public class WoodStyle extends GradientBoardStyle {
      */
     @Override
     public Color getBoardColor() {
-        return new Color(
-            (MATERIAL_LIGHT.getRed() + MATERIAL_DARK.getRed()) / 2,
-            (MATERIAL_LIGHT.getGreen() + MATERIAL_DARK.getGreen()) / 2,
-            (MATERIAL_LIGHT.getBlue() + MATERIAL_DARK.getBlue()) / 2
-        );
+        return PRIMARY_COLOR;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Color getBoardContrastColor() {
+        return CONTRAST_COLOR;
     }
 }

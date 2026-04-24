@@ -23,6 +23,13 @@ public class MetalStyle extends GradientBoardStyle {
     private static final Color OUTLINE = new Color(165, 170, 180);
     private static final Color OUTLINE_SELECTED = new Color(80, 170, 190);
     private static final double PIT_FOCUS_FACTOR = 0.25;
+
+    private static final Color CONTRAST_COLOR = Color.BLACK;
+    private static final Color PRIMARY_COLOR = new Color(
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2),
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2),
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getBlue(), 2) + Math.pow(MATERIAL_DARK.getBlue(), 2)) / 2)
+    );
     
     /**
      * Initialize gradient board with metal themed colors and specified focus.
@@ -40,10 +47,13 @@ public class MetalStyle extends GradientBoardStyle {
      */
     @Override
     public Color getBoardColor() {
-        int r = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2);
-        int g = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2);
-        int b = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getBlue(), 2) + Math.pow(MATERIAL_DARK.getBlue(), 2)) / 2);
-        
-        return new Color(r, g, b);
+        return PRIMARY_COLOR;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Color getBoardContrastColor() {
+        return CONTRAST_COLOR;
     }
 }

@@ -23,7 +23,11 @@ public class MancalaModel {
     
     private boolean isPlayerATurn; // True if it is currently Player A's turn, false if it is Player B's turn.
     private boolean gameOver; // True once game has ended and no more moves will be proceed furthur.
+    private boolean pendingGameOver;
     private boolean pendingTurnSwitch; // True when current player made a move that would switch turn but has not yet confirmed it, false otherwise.
+
+    private int storeA;
+    private int storeB;
 
     /**
      * Constructs a new MancalaModel with an empty board.
@@ -39,7 +43,9 @@ public class MancalaModel {
         undoManager = new UndoManager();
 
         isPlayerATurn = true;
-        gameOver = false;
+
+        storeA = numHoles / 2 - 1;
+        storeB = numHoles - 1;
     }
 
     /**
@@ -60,8 +66,6 @@ public class MancalaModel {
     public void setUpBoard(int stonesPerPit) {
         board.setStonesPerPit(stonesPerPit);
         isPlayerATurn = true;
-        gameOver = false;
-        pendingTurnSwitch = false;
         undoManager.reset();
         notifyListeners();
     }
@@ -116,10 +120,11 @@ public class MancalaModel {
     }
 
     /**
-     * It will return the winner of the game or a tie message once the game is over.
-     * It will only be call after the isGameOver() returns true
+     * Returns the winner of the game, or "Tie" if scores are equal.
      *
-     * @return Player A if A has a more stones, Player B if B has more, otherwise return tie.
+     * @return "Winner: Player A" if Player A has more stones,
+     *         "Winner: Player B" if Player B has more stones,
+     *         or "Tie" if both have the same number of stones.
      */
     public String getWinner() {
         int a = board.getStoreA();
@@ -138,20 +143,16 @@ public class MancalaModel {
      * (no confirmation required — they may move again immediately).
      * Otherwise, pendingTurnSwitch is set to true and the player must confirm before the turn advances.
      *
-     * @param pitIndex which pit to move from
+     * @param pitIndex index of the pit from which stones are moved.
      */
     public void makeMove(int pitIndex) {
-        int totalPits = pitsPerSide * 2;
-        if (gameOver) return;
-        if (pendingTurnSwitch) return;  // must confirm or undo before moving again
-        if (pitIndex < 0 || pitIndex > totalPits || pitIndex == pitsPerSide)
-            return;
-        if (isPlayerATurn && pitIndex > pitsPerSide)
-            return;
-        if (!isPlayerATurn && pitIndex < pitsPerSide)
-            return;
-        if (board.getStonesInHole(pitIndex) == 0)
-            return;
+        if (pendingTurnSwitch ||
+            pitIndex == storeA || 
+            pitIndex == storeB || 
+            (isPlayerATurn && pitIndex > storeA) || 
+            (!isPlayerATurn && pitIndex < storeA) || 
+            board.getStonesInHole(pitIndex) == 0
+        ) return;
 
         undoManager.saveState(board.getBoardCopy(), isPlayerATurn);
 
@@ -159,52 +160,47 @@ public class MancalaModel {
         int currentIndex = pitIndex;
 
         while (stones > 0) {
-            currentIndex = (currentIndex + 1) % (totalPits + 2);
-            if (isPlayerATurn && currentIndex == totalPits + 1)
-                continue;
-            if (!isPlayerATurn && currentIndex == pitsPerSide)
-                continue;
+            currentIndex = (currentIndex + 1) % (pitsPerSide * 2 + 2);
+            if (isPlayerATurn && currentIndex == storeB) continue;
+            if (!isPlayerATurn && currentIndex == storeA) continue;
             board.addStoneToHole(currentIndex);
             stones--;
         }
 
-        boolean landedInOwnStore = (isPlayerATurn && currentIndex == pitsPerSide) || 
-                                    (!isPlayerATurn && currentIndex == totalPits + 1);
+        boolean landedInOwnStore = (isPlayerATurn && currentIndex == storeA) || 
+                                    (!isPlayerATurn && currentIndex == storeB);
 
-        // Capture rule: last stone landed in an empty pit on current player's own side
-        boolean landedOnOwnSide = (isPlayerATurn && currentIndex >= 0 && currentIndex < pitsPerSide) ||
-                                (!isPlayerATurn && currentIndex > pitsPerSide && currentIndex <= totalPits);
+        boolean landedOnOwnSide = (isPlayerATurn && currentIndex < storeA) ||
+                                (!isPlayerATurn && currentIndex > storeA && currentIndex < storeB);
 
         if (landedOnOwnSide && board.getStonesInHole(currentIndex) == 1) {
             int oppositeIndex = board.getOppositePitIndex(currentIndex);
-            int oppositeStones = board.getStonesInHole(oppositeIndex);
+            int oppositeStones = board.moveStonesOut(oppositeIndex);
+            
             if (oppositeStones > 0) {
-                board.moveStonesOut(currentIndex);   // take the landing stone
-                board.moveStonesOut(oppositeIndex);  // take all opposite stones
-                int store = isPlayerATurn ? pitsPerSide : totalPits + 1;
-                for (int i = 0; i < oppositeStones + 1; i++) {
-                    board.addStoneToHole(store);
-                }
+                int store = isPlayerATurn ? storeA : storeB;
+                board.addStonesToHole(store, oppositeStones + board.moveStonesOut(currentIndex));
             }
         }
 
-        if (landedInOwnStore) {
-            pendingTurnSwitch = false;
-        } else {
+        pendingTurnSwitch = !landedInOwnStore;
+
+        if(checkAndSweep()){
             pendingTurnSwitch = true;
         }
 
-        checkGameOver();
         notifyListeners();
     }
 
     /**
      * Confirms the current player's move and advances the turn to the other player.
-     * Has no effect if there is no pending turn switch (e.g. during a free turn or
-     * before any move has been made).
+     * Has no effect if there is no pending turn switch (e.g. during a free turn or before any move has been made).
      */
     public void confirmMove() {
         if (!pendingTurnSwitch) return;
+        if (pendingGameOver) {
+            gameOver = true;
+        }
         isPlayerATurn = !isPlayerATurn;
         pendingTurnSwitch = false;
         undoManager.resetUndoCount();
@@ -212,37 +208,31 @@ public class MancalaModel {
     }
 
     /**
-     * Checks if one side of the board is completely empty.
-     * If it is true the game is over. Any Stones left on the other side get moved into that player's store.
-     * Then we mark the game as finished
+     * Marks the game as over if one side of the board is completely empty.
+     * Any stones left on the other side get moved into that player's store.
      */
-    private void checkGameOver() {
-        int sideA = 0;
-        int sideB = 0;
-        for (int i = 0; i < pitsPerSide; i++) sideA += board.getStonesInHole(i);
-        for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) sideB += board.getStonesInHole(i);
+    private boolean checkAndSweep() {
+        int sideA = board.getPlayerAPitStoneCount();
+        int sideB = board.getPlayerBPitStoneCount();
 
-        if (sideA == 0 || sideB == 0) {          // Move any leftover stones on A's side into A's store.
-            if (sideA > 0) {
-                for (int i = 0; i < pitsPerSide; i++) {
-                    int n = board.moveStonesOut(i);
-                    for (int j = 0; j < n; j++) board.addStoneToHole(6);
-                }
+        if (sideA == 0 || sideB == 0) {
+            for (int i = 0; i < storeA; i++) {
+                board.addStonesToHole(storeA, board.moveStonesOut(i));
             }
-            if (sideB > 0) {
-                for (int i = pitsPerSide + 1; i <= pitsPerSide * 2; i++) {
-                    int n = board.moveStonesOut(i);
-                    for (int j = 0; j < n; j++)
-                        board.addStoneToHole(pitsPerSide * 2 + 1);
-                }
+            for (int i = storeA + 1; i < storeB; i++) {
+                board.addStonesToHole(storeB, board.moveStonesOut(i));
             }
-            gameOver = true;
+            pendingGameOver = true;
+            return true;
         }
+
+        return false;
     }
 
+
     /**
-     * Undo the last move and put the board back to how it was before the player made their move.
-     * The player can only undo upto 3 times per turn and cn't undo twice in a row without making a move in between.
+     * Undoes the last move and restores the board to its previous state (before the player made their move).
+     * The player can only undo up to 3 times per turn and cannot undo twice in a row without making a move in between.
      */
     public void undo() {
         if (!undoManager.canUndo())
@@ -251,7 +241,7 @@ public class MancalaModel {
         if (snapshot != null) {
             board.restoreBoard(snapshot);
             isPlayerATurn = undoManager.getSavedTurn();
-            gameOver = false;
+            pendingGameOver = false;
             pendingTurnSwitch = false;
             notifyListeners();
         }
