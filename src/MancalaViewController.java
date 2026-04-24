@@ -49,6 +49,8 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     private final JPanel boardWithLabels;
     private final JLabel storeALabel;
     private final JLabel storeBLabel;
+    private final JLabel playerALabel;
+    private final JLabel playerBLabel;
 
     /**
      * Constructs the view/controller and initializes UI components,
@@ -92,11 +94,25 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         storeBLabel = createLabel();
         storeBLabel.setText("<html>M<br>A<br>N<br>C<br>A<br>L<br>A<br><br>B</html>");
 
-        
+        // Player A and Player B labels with the directional arrows placed at North and SSouth of the board.
+        playerBLabel = new JLabel("\u2B05 Player B", JLabel.CENTER);
+        playerBLabel.setFont(TEXT_FONT);
+        playerBLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+        playerBLabel.setOpaque(true);
+
+        playerALabel = new JLabel("Player A \u2B95", JLabel.CENTER);
+        playerALabel.setFont(TEXT_FONT);
+        playerALabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+        playerALabel.setOpaque(true);
+
+
         boardWithLabels = new JPanel(new BorderLayout());
         boardWithLabels.add(boardPanel, BorderLayout.CENTER);
         boardWithLabels.add(storeALabel,BorderLayout.EAST);
         boardWithLabels.add(storeBLabel, BorderLayout.WEST);
+        boardWithLabels.add(playerBLabel, BorderLayout.NORTH);
+        boardWithLabels.add(playerALabel, BorderLayout.SOUTH);
+
 
         JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
 
@@ -122,7 +138,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
 
     /**
      * Sets the board style strategy used to paint the board
-     * Updates the label panel colors to match with the style colors.
+     * Updates the label panel colors and player labels to match with the style colors.
      *
      * @param style the BoardStyle implementation to use; cannot be null
      */
@@ -130,9 +146,15 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         this.style = style;
         
         Color boardColor = style.getBoardColor();
+        Color contrastColor = style.getBoardContrastColor();
         boardWithLabels.setBackground(boardColor);
         storeALabel.setForeground(style.getBoardContrastColor());
         storeBLabel.setForeground(style.getBoardContrastColor());
+
+        playerALabel.setBackground(boardColor);
+        playerALabel.setForeground(contrastColor);
+        playerBLabel.setBackground(boardColor);
+        playerBLabel.setForeground(contrastColor);
 
         repaint();
     }
