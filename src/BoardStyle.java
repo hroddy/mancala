@@ -17,17 +17,29 @@ import java.awt.Graphics2D;
  */
 public interface BoardStyle {
     /**
+     * Precondition: none.
+     * Postcondition: The board's primary color is returned.
+     * 
      * @return the board's primary color.
      */
     Color getBoardColor();
 
     /**
+     * Precondition: none.
+     * Postcondition: The board's contrast color is returned.
+     * 
      * @return the board's contrast color.
      */
     Color getBoardContrastColor();
 
     /**
      * Paints the board, including pits, stores, and stones, within the specified drawing window.
+     * 
+     * Precondition:  Positive boardWidth and boardHeight, gameState length equals the number of holes, 
+     *                all counts in gameState non-negative and do not exceed max possible stones.
+     * Postcondition: The board, pits, stores, and stones are rendered to reflect the current gameState.
+     *                The active player's pits are visually highlighted if the game is not over.
+     *                Cached layout and rendering data are recomputed if the board size has changed.
      * 
      * @param g2 graphics context used to draw the board.
      * @param boardWidth width of the window.
@@ -47,6 +59,9 @@ public interface BoardStyle {
      * Returns the index of the pit at the given coordinates, or -1 if no valid pit was clicked.
      * Allows the controller to map a mouse click to a pit without duplicating layout math.
      * Stores are not considered pits.
+     * 
+     * Precondition: Board layout has been initialized (i.e., drawBoard has been called at least once).
+     * Postcondition: Returns the corresponding index if a valid pit was clicked, -1 otherwise.
      *
      * @param clickX x-coordinate of mouse click relative to the board panel.
      * @param clickY y-coordinate of mouse click relative to the board panel.

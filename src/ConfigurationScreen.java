@@ -1,5 +1,5 @@
 /**
- * StyleSelectionScreen.java
+ * ConfigurationScreen.java
  * 
  * Context program for strategy pattern; assign the chosen BoardStyle to the game view.
  * 
@@ -18,9 +18,14 @@ public class ConfigurationScreen extends JFrame {
     private static final Dimension BUTTON_SIZE = new Dimension(150, 50);
 
     /**
-     * Set up one button per available style.
-     * Clicking a button sets the style strategy of view and launches the game.
-     * MancalaTest will launch this screen at the start of the application.
+     * Sets up one button for each available style.
+     * Clicking a button sets the style strategy of the view and launches the game setup.
+     * MancalaTest launches this screen at the start of the application.
+     * 
+     * Precondition: maxPitStart >= 3, pitsPerSide > 0
+     * Postcondition: A configuration screen is built with a prompt label and buttons for each available board style.
+     *                Each button is active and updates the view/controller with its associated style when clicked.
+     *                The frame is packed, centered on the screen, non-resizable, and configured to exit on close.
      */
     public ConfigurationScreen(
         MancalaViewController viewAndController, 
@@ -54,6 +59,60 @@ public class ConfigurationScreen extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
+    /**
+     * Prompts players to select a starting stone count from 3 to maxPitStart.
+     *
+     * Precondition: maxPitStart >= 3.
+     * Postcondition: The selected number of starting stones per pit is returned, 
+     *                or -1 if the user exits the dialog.
+     *  
+     * @param maxPitStart maximum allowed starting stones per pit.
+     * @return number of stones players choose to start with in each pit.
+     */
+    public int promptStoneCount(int maxPitStart) {
+        String[] options = new String[maxPitStart - 2];
+        for(int i = 3; i <= maxPitStart; i++) {
+            options[i - 3] = String.valueOf(i);
+        }
+
+        int choice = JOptionPane.showOptionDialog(
+            this,
+            "How many stones per pit?",
+            null,
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        if (choice < 0){
+            return choice;
+        }
+
+        return Integer.parseInt(options[choice]);
+    }
+
+    /**
+     * Creates a button for the specified board style.
+     * Attaches a listener to the button so that when clicked,
+     * the game launches with the specified style and number of stones in each pit.
+     * 
+     * Precondition:  styleName is non-empty and maxPitStart >= 3.
+     * Postcondition: A JButton with the specified styleName is created and returned.
+     *                When clicked, it assigns the corresponding style to the view/controller,
+     *                closes the style selection screen, and prompts the user to choose a
+     *                starting stone count from 3 to maxPitStart. If the user selects a valid
+     *                count, the model is initialized with that count and the game frame is made visible.
+     *                
+     * @param styleName text displayed on the button.
+     * @param style board style associated with the button.
+     * @param viewAndController view/controller whose style is updated.
+     * @param model game model to initialize starting stones per pit for.
+     * @param gameFrame frame that displays the game.
+     * @param maxPitStart maximum allowed starting stones per pit.
+     * @return a configured JButton for selecting the given board style.
+     */
     private JButton createActiveStyleButton(
         String styleName,
         BoardStyle style,
@@ -77,33 +136,5 @@ public class ConfigurationScreen extends JFrame {
         });
 
         return button;
-    }
-
-    /**
-     * Prompts players to select a starting stone count of 3 to .
-     * Called once after the game frame becomes visible and a style has been selected.
-     * Initializes the board via the model using the chosen count.
-     *
-     * @precondition setStyle() has been called and the game frame is visible.
-     * @postcondition the model's board is initialized with the chosen number of stones per pit. Defaults to 3 if the dialog is closed without a selection.
-     */
-    public int promptStoneCount(int maxPitStart) {
-        String[] options = new String[maxPitStart - 2];
-        for(int i = 3; i <= maxPitStart; i++) {
-            options[i - 3] = String.valueOf(i);
-        }
-
-        int choice = JOptionPane.showOptionDialog(
-            this,
-            "How many stones per pit?",
-            null,
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-
-        return Integer.parseInt(options[choice]);
     }
 }
