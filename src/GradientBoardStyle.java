@@ -19,6 +19,7 @@ import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Random;
 import java.awt.Font;
+import java.awt.FontMetrics;
 
 /**
  * Provides shared fields and helper methods for drawing a gradient board, its holes (pits or stores), and the stones within them.
@@ -28,10 +29,11 @@ public abstract class GradientBoardStyle implements BoardStyle {
     private static final int RANDOM_RETRIES = 100;
     private static final double MIN_DIST = 0.15;
     private static final double MIN_SQUARE_DIST = MIN_DIST * MIN_DIST;
+    private static final double FONT_SIZE_RATIO = 0.20;
     private static final double STONE_SIZE_RATIO = 0.15;
     private static final double OUTLINE_RATIO = 0.03;
     private static final double BOLD_OUTLINE_RATIO = 0.05;
-    private static final double GAP_RATIO = 0.02;
+    private static final double GAP_RATIO = 0.03;
     private static final float[] GRAD_RATIOS = {0f, 0.75f};
 
     private final int numHoles;
@@ -143,43 +145,6 @@ public abstract class GradientBoardStyle implements BoardStyle {
         drawPitLabels(g2);
     }
 
-    /**
-     * Draws A1 - A6 below the bottom of the playerA pits and B1 - B6 above the top of the player B pits.
-     * A1 to A6 run from left to right
-     * B6 to B1 run from left to right
-     * @param g2 graphics context used to draw the labels.
-     */
-    private void drawPitLabels(Graphics2D g2) {
-        g2.setColor(getBoardContrastColor());
-        g2.setFont(pitLabelFont);
-        java.awt.FontMetrics fm = g2.getFontMetrics();
-        int pitsPerSide = (numHoles -2)/2;
-        double labelGap = pitDiameter *0.05;
-        int numPits = numHoles -2;
-
-        for(int i =0; i<pitsPerSide; i++){
-            RoundRectangle2D pit = holeShapes[i];
-            String label = "A"+(i+1);
-            float labelX = (float)(pit.getCenterX() - fm.stringWidth(label)/2.0);
-            float labelY = (float)(pit.getY() + pit.getHeight()+ labelGap + fm.getAscent());
-            g2.drawString(label, labelX, labelY);
-        }
-        for(int i =0; i<pitsPerSide; i++){
-            RoundRectangle2D pit = holeShapes[numPits - i];
-            String label = "B"+(pitsPerSide-i);
-            float labelX = (float)(pit.getCenterX() - fm.stringWidth(label)/2.0);
-            float labelY = (float)(pit.getY() - labelGap);
-            g2.drawString(label, labelX, labelY);
-        }
-    }
-
-    /**
-     * The font size scales with the pit diameter so that the label will remain proportional to the window maximize and minimize size.
-     */
-    private void computePitLabelFont() {
-        pitLabelFont = new Font("Arial", Font.BOLD, (int)(pitDiameter*0.20));
-    }
-
 
     /**
      * {@inheritDoc}
@@ -212,7 +177,7 @@ public abstract class GradientBoardStyle implements BoardStyle {
         double gap = boardWidth * GAP_RATIO;
         double cols = numHoriGaps - 1;
         double gridWidth = (boardWidth - (gap * numHoriGaps)) / cols;
-        double gridHeight = (boardHeight - (gap * 4)) / 2;
+        double gridHeight = (boardHeight - (gap * 3)) / 2;
         pitDiameter = Math.min(gridWidth, gridHeight);  
         double horiOffset = (gridWidth - pitDiameter) / 2;
         double vertOffset = (gridHeight - pitDiameter) / 2;
@@ -233,8 +198,8 @@ public abstract class GradientBoardStyle implements BoardStyle {
         int pitsPerSide = numPits / 2;
         for (int pit = 0; pit < pitsPerSide; pit++) {
             double pitX = (gap * (pit + 2)) + (gridWidth * (pit + 1)) + horiOffset;
-            double pitBotY = gridHeight + 3 * gap + vertOffset;
-            double pitTopY = 2* gap + vertOffset;
+            double pitBotY = gridHeight + 2 * gap + vertOffset;
+            double pitTopY = gap + vertOffset;
             holeShapes[pit] = new RoundRectangle2D.Double(
                 pitX, pitBotY, pitDiameter, pitDiameter, pitDiameter, pitDiameter
             );
@@ -359,6 +324,15 @@ public abstract class GradientBoardStyle implements BoardStyle {
         this.masterStonePaint = new RadialGradientPaint(center, gradRadius, focus, GRAD_RATIOS, stoneGradientColors, CycleMethod.NO_CYCLE);
     }
 
+    /**
+     * Scale font size with the pit diameter.
+     * 
+     * Precondition: computeHoleShapes was run first to initialize pitDiameter.
+     * Postcondition: pitLabelFont's font size is computed based on pitDiameter.
+     */
+    private void computePitLabelFont() {
+        pitLabelFont = new Font("Arial", Font.BOLD, (int)(pitDiameter * FONT_SIZE_RATIO));
+    }
 
     /**
      * Renders all holes with lighting effects.
@@ -435,6 +409,39 @@ public abstract class GradientBoardStyle implements BoardStyle {
             g2.draw(masterStoneShape);
 
             g2.translate(-x, -y);
+        }
+    }
+
+    /**
+     * Draw labels for all of player A and player B's pits.
+     * 
+     * Precondition: computeHoleShapes was run first to initialize holeShapes[].
+     *               computePitLabelFont was run first to initilize pitLabelFont.
+     * Postcondition: All pit labels are drawn in the correct location relative to corresponding pits.
+     * 
+     * @param g2 graphics context used to draw the labels.
+     */
+    private void drawPitLabels(Graphics2D g2) {
+        g2.setColor(getBoardContrastColor());
+        g2.setFont(pitLabelFont);
+        FontMetrics fm = g2.getFontMetrics();
+        int pitsPerSide = (numHoles - 2) / 2;
+        double labelGap = pitDiameter * GAP_RATIO;
+        int numPits = numHoles - 2 ;
+
+        for(int i = 0; i < pitsPerSide; i++) {
+            RoundRectangle2D pit = holeShapes[i];
+            String label = "A"+ (i+1);
+            float labelX = (float)(pit.getCenterX() - fm.stringWidth(label) / 2.0);
+            float labelY = (float)(pit.getY() + pit.getHeight() + labelGap + fm.getAscent());
+            g2.drawString(label, labelX, labelY);
+        }
+        for(int i = 0; i < pitsPerSide; i++) {
+            RoundRectangle2D pit = holeShapes[numPits - i];
+            String label = "B"+ (pitsPerSide-i);
+            float labelX = (float)(pit.getCenterX() - fm.stringWidth(label) / 2.0);
+            float labelY = (float)(pit.getY() - labelGap - fm.getDescent());
+            g2.drawString(label, labelX, labelY);
         }
     }
 

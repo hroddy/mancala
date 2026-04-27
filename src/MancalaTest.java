@@ -1,5 +1,3 @@
-import javax.swing.JFrame;
-
 /**
  * MancalaTest.java
  * 
@@ -9,6 +7,9 @@ import javax.swing.JFrame;
  * @author Johnny Tsai
  * @author Nishan Bhattarai
  */
+
+import java.awt.Dimension;
+import javax.swing.JFrame;
 
 /**
  * Creates and initializes the Mancala application.
@@ -28,7 +29,7 @@ public class MancalaTest {
         
         JFrame gameFrame = new JFrame("Mancala");
         gameFrame.add(viewAndController);
-        gameFrame.setSize(1200, 400);
+        gameFrame.setMinimumSize(new Dimension(1500, 600));
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

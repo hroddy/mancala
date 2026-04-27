@@ -21,6 +21,7 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -37,20 +38,23 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     private MancalaModel model; // The game model this controller reads from and writes to.
     private BoardStyle style; // The pluggable style strategy used to draw the board.
     
+    private final JPanel boardPanel;
+    private final JLabel storeALabel;
+    private final JLabel storeBLabel;
+    private final JLabel playerALabel;
+    private final JLabel playerBLabel;
+
     /*
      * Commits the current player's move and advances the turn to the other player.
      * Enabled only when a move is pending confirmation.
      * Automatically invoked when the current player exhausts their undo allowance.
      */
-    private JButton confirmButton; 
-    private JButton undoButton; // Allows the current player to undo their last move.
-    private JLabel turnLabel; // Displays whose turn it currently is.
-    
+    private final JButton confirmButton; 
+    private final JButton undoButton; // Allows the current player to undo their last move.
+    private final JLabel turnLabel; // Displays whose turn it currently is.
+
     private final JPanel boardWithLabels;
-    private final JLabel storeALabel;
-    private final JLabel storeBLabel;
-    private final JLabel playerALabel;
-    private final JLabel playerBLabel;
+    private final JPanel controlBar; 
 
     /**
      * Constructs the view/controller and initializes UI components,
@@ -63,7 +67,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         setLayout(new BorderLayout());
 
         // Delegate drawing of the board to the BoardStyle.
-        JPanel boardPanel = new JPanel() {
+        boardPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -94,27 +98,25 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         storeBLabel = createLabel();
         storeBLabel.setText("<html>M<br>A<br>N<br>C<br>A<br>L<br>A<br><br>B</html>");
 
-        // Player A and Player B labels with the directional arrows placed at North and SSouth of the board.
-        playerBLabel = new JLabel("\u2B05 Player B", JLabel.CENTER);
-        playerBLabel.setFont(TEXT_FONT);
-        playerBLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
-        playerBLabel.setOpaque(true);
-
-        playerALabel = new JLabel("Player A \u2B95", JLabel.CENTER);
+        playerALabel = new JLabel("Player A   --->", JLabel.CENTER);
         playerALabel.setFont(TEXT_FONT);
-        playerALabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+        playerALabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         playerALabel.setOpaque(true);
 
+        playerBLabel = new JLabel("<---   Player B", JLabel.CENTER);
+        playerBLabel.setFont(TEXT_FONT);
+        playerBLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        playerBLabel.setOpaque(true);
 
         boardWithLabels = new JPanel(new BorderLayout());
         boardWithLabels.add(boardPanel, BorderLayout.CENTER);
         boardWithLabels.add(storeALabel,BorderLayout.EAST);
         boardWithLabels.add(storeBLabel, BorderLayout.WEST);
-        boardWithLabels.add(playerBLabel, BorderLayout.NORTH);
         boardWithLabels.add(playerALabel, BorderLayout.SOUTH);
+        boardWithLabels.add(playerBLabel, BorderLayout.NORTH);
 
 
-        JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
+        controlBar = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
 
         turnLabel = new JLabel("Player A's Turn");
         turnLabel.setFont(TEXT_FONT);
@@ -183,6 +185,7 @@ public class MancalaViewController extends JPanel implements MancalaListener {
             undoButton.setEnabled(false);
             confirmButton.setEnabled(false);
             JOptionPane.showMessageDialog(this, "Game Over! " + model.getWinner());
+            SwingUtilities.getWindowAncestor(this).dispose();
         }
     }
 
