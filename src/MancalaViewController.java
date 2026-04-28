@@ -59,6 +59,10 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     /**
      * Constructs the view/controller and initializes UI components,
      * including the board panel, controls, and event listeners.
+     * 
+     * Precondition: none.
+     * Postcondition: View/controller is initialized with board display, labels,
+     *                control buttons, and event listeners.
      *
      * @param model the MancalaModel driving the game logic; cannot be null.
      */
@@ -98,15 +102,11 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         storeBLabel = createLabel();
         storeBLabel.setText("<html>M<br>A<br>N<br>C<br>A<br>L<br>A<br><br>B</html>");
 
-        playerALabel = new JLabel("Player A   --->", JLabel.CENTER);
-        playerALabel.setFont(TEXT_FONT);
-        playerALabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        playerALabel.setOpaque(true);
+        playerALabel = createLabel();
+        playerALabel.setText("Player A   --->");
 
-        playerBLabel = new JLabel("<---   Player B", JLabel.CENTER);
-        playerBLabel.setFont(TEXT_FONT);
-        playerBLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        playerBLabel.setOpaque(true);
+        playerBLabel = createLabel();
+        playerBLabel.setText("<---   Player B");
 
         boardWithLabels = new JPanel(new BorderLayout());
         boardWithLabels.add(boardPanel, BorderLayout.CENTER);
@@ -139,8 +139,13 @@ public class MancalaViewController extends JPanel implements MancalaListener {
     }
 
     /**
-     * Sets the board style strategy used to paint the board
-     * Updates the label panel colors and player labels to match with the style colors.
+     * Sets the board style strategy used to paint the board.
+     * Updates the board and label colors to match the style.
+     * 
+     * Precondition: none.
+     * Postcondition: BoardStyle is set to the specified style, 
+     *                board and label colors are updated,
+     *                and this view is repainted.
      *
      * @param style the BoardStyle implementation to use; cannot be null
      */
@@ -150,12 +155,9 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         Color boardColor = style.getBoardColor();
         Color contrastColor = style.getBoardContrastColor();
         boardWithLabels.setBackground(boardColor);
-        storeALabel.setForeground(style.getBoardContrastColor());
-        storeBLabel.setForeground(style.getBoardContrastColor());
-
-        playerALabel.setBackground(boardColor);
+        storeALabel.setForeground(contrastColor);
+        storeBLabel.setForeground(contrastColor);
         playerALabel.setForeground(contrastColor);
-        playerBLabel.setBackground(boardColor);
         playerBLabel.setForeground(contrastColor);
 
         repaint();
@@ -165,17 +167,18 @@ public class MancalaViewController extends JPanel implements MancalaListener {
      * {@inheritDoc}
      * Updates UI components to reflect the current game state,
      * including the turn label, control buttons, and board display.
-     * Displays a dialog if the game has ended.
+     * Displays game result dialog and closes the window if the game has ended.
      */
     @Override
     public void boardChanged() {
-        if (model.isPendingTurnSwitch() && !model.canUndo()) {
+        boolean pending = model.isPendingTurnSwitch();
+        boolean undo = model.canUndo();
+        if (pending && !undo) {
             model.confirmMove();
             return;
         }
  
-        boolean pending = model.isPendingTurnSwitch();
-        undoButton.setEnabled(model.canUndo());
+        undoButton.setEnabled(undo);
         confirmButton.setEnabled(pending);
         
         turnLabel.setText(model.isPlayerATurn() ? "Player A's Turn" : "Player B's Turn");
@@ -189,11 +192,18 @@ public class MancalaViewController extends JPanel implements MancalaListener {
         }
     }
 
+    /**
+     * Precondition: none.
+     * Postcondition: Transparent JLabel with centered text and border gaps returned.
+     * 
+     * @return JLabel with specified configurations.
+     */
     private JLabel createLabel() {
         JLabel label = new JLabel();
         label.setOpaque(false);
         label.setFont(TEXT_FONT);
         label.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        label.setHorizontalAlignment(JLabel.CENTER);
         return label;
     }
 }

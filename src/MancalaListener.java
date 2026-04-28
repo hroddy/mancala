@@ -14,6 +14,9 @@
  */
 public interface MancalaListener {
     /**
+     * Precondition: The board state has changed.
+     * Postcondition: The board GUI is repainted.
+     * 
      * Called when the board state changes.
      */
     void boardChanged();

@@ -32,7 +32,11 @@ public class WoodStyle extends GradientBoardStyle {
     );
 
     /**
-     * Initialize gradient board with wood themed colors and specified focus.
+     * Initialize gradient board with wood-themed colors and specified focus.
+     * 
+     * Precondition: pitsPerSide > 0, maxPitStart >= 3.
+     * Postcondition: WoodStyle is initialized with wood-themed colors.
+     * 
      * @param maxPitStart max number of stones per pit at start of Mancala game.
      * @param pitsPerSide number of pits for each of the pair of players.
      */

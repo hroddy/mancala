@@ -18,6 +18,10 @@ public class MancalaTest {
     /**
      * Launches the Mancala game and connects the model, view/controller, and setup screen.
      * 
+     * Precondition: none.
+     * Postcondition: Model, view/controller, and game window are instantiated and connected.
+     *                The configuration screen is displayed for the user to set up the game.
+     * 
      * @param args unused command line arguments.
      */
     public static void main(String[] args) {

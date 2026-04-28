@@ -126,10 +126,11 @@ public class ConfigurationScreen extends JFrame {
 
         button.addActionListener(e -> {
             viewAndController.setStyle(style);
-            dispose();
 
             int stonesPerPit = promptStoneCount(maxPitStart);
             if (stonesPerPit < 0) return;
+            
+            dispose();
 
             model.setUpBoard(stonesPerPit);
             gameFrame.setVisible(true);
