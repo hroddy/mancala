@@ -1,15 +1,23 @@
 /**
  * MancalaListener.java
  * 
- * Interface that MancalaView will implement to listen for changes in the MancalaModel and update the view
- * Decouples model from view so model can notify any object that implements this contract without knowing its concrete type.
- * ManaclaView will implement boardChanged() to update the view when the model changes.
+ * Listener interface for receiving notifications when the Mancala model changes.
  * 
  * @author Hannah Roddy
  * @author Johnny Tsai
  * @author Nishan Bhattarai
  */
 
+/**
+ * Defines callback contract for objects that need to respond when the board state changes.
+ * Decouples model from view by allowing model to notify listeners without depending on a concrete view class.
+ */
 public interface MancalaListener {
-    public void boardChanged();
+    /**
+     * Precondition: The board state has changed.
+     * Postcondition: The board GUI is repainted.
+     * 
+     * Called when the board state changes.
+     */
+    void boardChanged();
 }

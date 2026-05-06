@@ -21,27 +21,42 @@ public class MetalStyle extends GradientBoardStyle {
     private static final Color PIT_DARK = new Color(45, 50, 60);
 
     private static final Color OUTLINE = new Color(165, 170, 180);
+    private static final Color OUTLINE_SELECTED = new Color(80, 170, 190);
     private static final double PIT_FOCUS_FACTOR = 0.25;
+
+    private static final Color CONTRAST_COLOR = Color.BLACK;
+    private static final Color PRIMARY_COLOR = new Color(
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2),
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2),
+        (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getBlue(), 2) + Math.pow(MATERIAL_DARK.getBlue(), 2)) / 2)
+    );
     
     /**
-     * Initialize gradient board with metal themed colors and specified focus.
+     * Constructs a metal-themed board style with specified configuration.
+     * 
+     * Precondition: pitsPerSide > 0, maxPitStart >= 3.
+     * Postcondition: MetalStyle is initialized with metal-themed colors.
      * 
      * @param maxPitStart max number of stones per pit at start of Mancala game.
      * @param pitsPerSide number of pits for each of the pair of players.
      */
     public MetalStyle(int maxPitStart, int pitsPerSide) {
-        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, PIT_FOCUS_FACTOR, maxPitStart, pitsPerSide);
+        super(MATERIAL_LIGHT, MATERIAL_DARK, PIT_LIGHT, PIT_DARK, OUTLINE, OUTLINE_SELECTED, PIT_FOCUS_FACTOR, maxPitStart, pitsPerSide);
     }
 
     /**
      * {@inheritDoc}
      * Blends gradient colors into a primary color using root-mean-square to maintain the luminous quality of the theme.
      */
+    @Override
     public Color getBoardColor() {
-        int r = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getRed(), 2) + Math.pow(MATERIAL_DARK.getRed(), 2)) / 2);
-        int g = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getGreen(), 2) + Math.pow(MATERIAL_DARK.getGreen(), 2)) / 2);
-        int b = (int) Math.sqrt((Math.pow(MATERIAL_LIGHT.getBlue(), 2) + Math.pow(MATERIAL_DARK.getBlue(), 2)) / 2);
-        
-        return new Color(r, g, b);
+        return PRIMARY_COLOR;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Color getBoardContrastColor() {
+        return CONTRAST_COLOR;
     }
 }
