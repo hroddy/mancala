@@ -103,7 +103,7 @@ BoardStyle</string>
      <string>x</string>
      <void method="set">
       <object idref="Point2D$Double3"/>
-      <double>210.0</double>
+      <double>200.0</double>
      </void>
     </void>
     <void class="java.awt.geom.Point2D$Double" method="getField">
@@ -114,7 +114,7 @@ BoardStyle</string>
      </void>
     </void>
     <void method="setLocation">
-     <double>210.0</double>
+     <double>200.0</double>
      <double>80.0</double>
     </void>
    </object>
@@ -139,12 +139,12 @@ BoardStyle</string>
      <string>y</string>
      <void method="set">
       <object idref="Point2D$Double4"/>
-      <double>390.0</double>
+      <double>400.0</double>
      </void>
     </void>
     <void method="setLocation">
      <double>520.0</double>
-     <double>390.0</double>
+     <double>400.0</double>
     </void>
    </object>
   </void>
@@ -161,7 +161,7 @@ BoardStyle</string>
      <string>x</string>
      <void method="set">
       <object idref="Point2D$Double5"/>
-      <double>720.0</double>
+      <double>730.0</double>
      </void>
     </void>
     <void class="java.awt.geom.Point2D$Double" method="getField">
@@ -172,7 +172,7 @@ BoardStyle</string>
      </void>
     </void>
     <void method="setLocation">
-     <double>720.0</double>
+     <double>730.0</double>
      <double>100.0</double>
     </void>
    </object>
@@ -249,11 +249,11 @@ MancalaListener</string>
      <string>x</string>
      <void method="set">
       <object idref="Point2D$Double8"/>
-      <double>730.0</double>
+      <double>740.0</double>
      </void>
     </void>
     <void method="setLocation">
-     <double>730.0</double>
+     <double>740.0</double>
      <double>0.0</double>
     </void>
    </object>
@@ -278,12 +278,12 @@ MancalaListener</string>
      <string>y</string>
      <void method="set">
       <object idref="Point2D$Double9"/>
-      <double>390.0</double>
+      <double>400.0</double>
      </void>
     </void>
     <void method="setLocation">
      <double>790.0</double>
-     <double>390.0</double>
+     <double>400.0</double>
     </void>
    </object>
   </void>
